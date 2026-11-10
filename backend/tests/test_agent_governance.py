@@ -37,4 +37,4 @@ def test_agent_rules_keep_development_separate_from_product_evaluation():
     rules = (ROOT / "SDD/rules.md").read_text()
     assert "development agents" in rules.lower()
     assert "Response, Task and Code" in rules
-    assert "does not supersede product PolicyDecision" in rules
+    assert "do not supersede product PolicyDecision" in rules
