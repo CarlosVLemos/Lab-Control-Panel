@@ -1,56 +1,63 @@
-# SDD — Agent Governance
+# SDD — Development governance
 
-This is the **single normative source** for developing Lab Control Panel with AI agents. Every new Spec lives under `SDD/spec/<id>/`. The GitHub issue or PR links to that Spec; neither replaces its contract.
+This file is the single normative source for AI-assisted development of Lab Control Panel. GitHub Issues define desired outcomes; tests and observed evidence prove completion. Do not confuse development agents with the Response, Task and Code workloads evaluated by the product.
 
-## Ownership
+## Owners
 
-| Agent | Responsibilities | Boundaries |
+| Agent | Primary responsibility | Boundary |
 | --- | --- | --- |
-| **Jarvis** | Plan and own Spec lifecycle, dependency map, handoffs and closure | No self-approval of implementation |
-| **Maquiavel** | Python domain, backend, workers, database and CI/backend infrastructure | Must not silently change frontend contracts |
-| **Van Gogh** | Vue/TypeScript, UX, traces and experiment visualization | Must not silently change API/domain contracts |
-| **Mefisto** | Independent QA, security, audit, test evidence and technical verdict | Does not implement the same task it approves or close Specs |
+| **Jarvis** | Analyze requests, plan, assign scope, coordinate handoffs and maintain Spec state | Never self-approves code |
+| **Maquiavel** | Python domain, API, persistence, jobs, runner and backend tests | Must not silently alter UI contracts |
+| **Van Gogh** | Vue/TypeScript UI, UX, error/empty/loading and evidence visualization | Must not silently alter API contracts |
+| **Mefisto** | Independent correctness, security, regression and test-evidence review | Must not implement the work it judges |
 
-A temporary specialty must be assigned to one of these four owners; do not create a fifth permanent development persona. The names are project roles, not proof that a tool actually spawned an independent process.
+These are roles, not evidence that a tool spawned separate processes. Use an actual subagent only when the current Codex client supports it and task independence justifies the extra context/tokens. At most two simultaneous writing agents, each on disjoint files. Use `SINGLE_WRITER` by default; select `PARALLEL_SAFE` only after proving separate ownership and a frozen shared contract.
 
-## Phase 1 — Planning (mandatory)
+## Task classification
 
-Jarvis creates `spec.md` and `tasks.md` from the templates. Maquiavel and Van Gogh propose a joint `contract.md` where applicable, including data schemas, routes, errors, frontend states, permissions, deployment and data migration implications. Mefisto defines independent tests in `tests.md`.
+Classify by **highest risk**, not file count; document the selection in the PR.
 
-- Choose `SINGLE_WRITER` or `PARALLEL_SAFE` and name one primary owner per task.
-- Record `Allowed paths`, explicit exclusions, dependencies and acceptance criteria.
-- **Human gate:** user reviews the plan and contract; only explicit approval marks the contract `FROZEN`. No code execution phase begins before that.
-- Don't activate a new Spec if an existing one is `in_progress` without user-approved carry-over.
+| Track | Use when | Mandatory artifacts |
+| --- | --- | --- |
+| **QUICK** | Small isolated change, no public contract, schema, auth, execution-boundary or release impact | Issue/goal, acceptance check, focused test and short PR summary. No formal Spec. |
+| **STANDARD** | Multi-file feature or nontrivial refactor; bounded risks; no critical boundary change | Short plan, affected paths, acceptance criteria and tests. Spec/contract only if cross-module interface changes. |
+| **CRITICAL** | Database migration with data implications; public API/schema contract; auth/tenancy; code execution; policy gates, rollout, security controls or irreversible effects | Full `SDD/spec/<id>/` documents, explicitly approved `FROZEN` contract before implementation, independent Mefisto review and human merge decision. |
 
-## Phase 2 — Execution
+Escalate QUICK -> STANDARD -> CRITICAL when evidence or scope changes; never downgrade solely to skip tests. For CRITICAL, classify an interface-breaking change as requiring a Change Request even if the code change is short.
 
-Only approved executors modify files inside their assigned `Allowed paths`. A `PARALLEL_SAFE` Spec may use at most two writers, on non-overlapping files with a frozen shared contract. Otherwise use `SINGLE_WRITER`.
+## Context before changing code
 
-- Work on feature branches; avoid commits straight to `main`.
-- Avoid shell/network/destructive operations unless explicitly authorized and appropriate to the task.
-- Do not run code emitted by evaluated agents. Controlled fixture execution follows LCP runner policies, not these developer-agent profiles.
-- Each owner reports a concise handoff: changed paths, decisions, unverified assumptions and risks.
-- A change to frozen schemas, routes, shared types, privileges, security boundaries or owned paths requires a **Change Request**. Jarvis moves the Spec back to planning; no silent drift.
+1. Read this file and the user request/Issue; inspect `git status`, the current branch and directly affected files.
+2. Read `docs/PROJECT_SPEC.md` or `docs/ARCHITECTURE.md` only when the task touches those decisions. Consult active Spec/ADRs when they apply.
+3. Search for nearby patterns, tests and call sites. Prefer changing the smallest coherent surface.
+4. Use `.agents/skills/lcp-implement-issue/SKILL.md` for implementation and `.agents/skills/lcp-review-change/SKILL.md` for independent review; these are optional repeatable procedures, not automatic permission grants.
+5. If crucial information is absent, name the assumption and select the least risky reversible interpretation; do not silently invent APIs or metrics.
 
-## Phase 3 — Independent validation
+Keep prompts/task plans bounded: objective, scope, paths, non-goals, checks and stop conditions. Avoid loading the entire repository or pasting long logs unless needed.
 
-Mefisto evaluates the diff against `contract.md` and `tests.md`, records exact commands, expected/actual results and missing evidence in `validation-result.md`, and produces `review.md`.
+## Planning and execution
 
-Allowed verdicts: `passed`, `failed`, `blocked`, `passed_with_restrictions`. Individual checks: `PASS`, `FAIL`, `BLOCKED`, `NOT_RUN`. Missing evidence never becomes PASS. A validator must not claim to have executed local commands unless those outputs are available.
+- QUICK: one owner implements and validates; a distinct review perspective is still desirable for risky changes.
+- STANDARD: Jarvis writes a concise plan; Maquiavel/Van Gogh own non-overlapping implementation. Freeze shared contracts when both touch an API boundary.
+- CRITICAL: Jarvis creates `spec.md` and `tasks.md`; Maquiavel + Van Gogh define `contract.md` as applicable; Mefisto defines `tests.md`. Human approval marks contract `FROZEN` before edits. Do not begin another CRITICAL Spec while one is `in_progress` without approved carry-over.
+- Work on a feature branch. Keep edits inside declared **Allowed paths**. No uncontrolled package changes, shell/network, destructive commands, migration execution, untrusted code or secret access.
+- Only parallelize independent reads or writing on disjoint paths after a shared contract is settled. Extra agents cost tokens and can create conflicting edits.
+- If frozen routes, schemas, safety limits, privileges or owned paths must change, stop and record a **Change Request** before resuming implementation.
+- Maquiavel documents backend responses/errors for Van Gogh; Van Gogh documents visual states for Mefisto. Handoffs should be concise and factual.
 
-Jarvis updates the Spec state and index after reviewing Mefisto's evidence. Human approval is required before merge/release.
+## Verification before claiming Done
 
-## State machine
+- Test the changed behavior and at least one relevant regression path; run the narrowest useful commands first, then full checks if feasible.
+- Prefer deterministic checks and contract tests. For probabilistic LLM features, record dataset version, candidate configuration, repetitions, costs and uncertainty instead of treating one output as proof.
+- Record commands, environment, exit status and actual evidence; `NOT_RUN` and `BLOCKED` are not `PASS`.
+- Mefisto reviews the diff against acceptance criteria, security boundaries and test plan when required. Verdicts: `passed`, `failed`, `blocked`, `passed_with_restrictions`; checks: `PASS`, `FAIL`, `BLOCKED`, `NOT_RUN`.
+- A green CI proves only the checks actually configured. Manual review is required before merge/release; do not self-merge or close Issues merely because an agent reports success.
+- Write final handoff: what changed, verification evidence, limitations, remaining risks and PR link.
 
-`draft → ready → in_progress → done` is the normal path.
-Alternative states: `paused`, `blocked`, `cancelled`, `superseded`, `rejected`. `rejected` applies only to `draft` before human approval.
+## Spec lifecycle for CRITICAL work
 
-Keep `SDD/index.md` current. Link validation evidence from `review.md`.
+`draft → ready → in_progress → done` is the normal path. Alternative states: `paused`, `blocked`, `cancelled`, `superseded`, `rejected` (`draft` only). Maintain `SDD/index.md`; use `SDD/templates/` for contract, tasks, tests, validation-result and review. Human approval gates contract freeze and merge.
 
-## Separation from product evaluation
+## Product boundaries
 
-The **LCP product** executes Response, Task and Code workloads under independent, versioned evaluation policies. The **development agents** here are simply contributor roles. Their internal verdicts do not supersede product PolicyDecision or automated test evidence.
-
-## Stack reference
-
-Python 3.12+, FastAPI, Pydantic v2, PostgreSQL/SQLAlchemy/Alembic, Redis/RQ, Vue 3/TypeScript/Vite, Docker Compose, pytest and GitHub Actions. Do not introduce frameworks for agent orchestration solely to make the architecture look complex.
+Production evaluation/policy remains separate from the developer workflow. `INCONCLUSIVE` must not promote a release; LLM-as-judge does not replace deterministic security checks. LCP's code runner accepts only controlled fixtures until isolation and a threat model are verified. Development-agent verdicts do not supersede product PolicyDecision or automated checks. A hash is a fingerprint, not signed provenance.
