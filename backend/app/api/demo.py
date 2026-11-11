@@ -10,13 +10,28 @@ from app.repositories.persistence import ConstraintViolation
 from app.services.demo_experiments import DemoNotFound, create_demo_experiment, load_demo_experiment
 
 router = APIRouter(prefix="/api/demo", tags=["demo"])
+_engine = None
+_session_factory = None
 
 
 def _factory():
+    global _engine, _session_factory
     try:
-        return create_session_factory(create_database_engine(os.environ["DATABASE_URL"]))
+        if _session_factory is None:
+            _engine = create_database_engine(os.environ["DATABASE_URL"])
+            _session_factory = create_session_factory(_engine)
+        return _session_factory
     except KeyError as exc:
         raise HTTPException(status_code=503, detail="Demo database is not configured") from exc
+
+
+def dispose_database_engine() -> None:
+    """Release the process-owned pool when FastAPI shuts down."""
+    global _engine, _session_factory
+    if _engine is not None:
+        _engine.dispose()
+    _engine = None
+    _session_factory = None
 
 
 @router.post("/experiments", status_code=201)

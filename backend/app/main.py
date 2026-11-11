@@ -1,8 +1,16 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-from app.api.demo import router as demo_router
+from app.api.demo import dispose_database_engine, router as demo_router
 
-app = FastAPI(title="Lab Control Panel", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    dispose_database_engine()
+
+app = FastAPI(title="Lab Control Panel", version="0.1.0", lifespan=lifespan)
 app.include_router(demo_router)
 
 
