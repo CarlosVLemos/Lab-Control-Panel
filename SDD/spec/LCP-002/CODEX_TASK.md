@@ -1,26 +1,26 @@
-# Handoff Codex — LCP-002 (contrato v2)
+# Handoff Codex — LCP-002 (contrato DRAFT v3)
 
-**Branch:** `feat/lcp-002-postgresql-persistence`
-**Issue:** https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2
-**Dependência:** https://github.com/CarlosVLemos/Lab-Control-Panel/pull/26
-**Status:** DRAFT v2 / PENDING (PR #26 integrado; não executar implementação até aprovação)
+Repositório: `CarlosVLemos/Lab-Control-Panel`
+Branch: `feat/lcp-002-postgresql-persistence`
+Issue: https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2
+Dependência LCP-001: resolvida (`770ade0`)
+**Status:** DRAFT v3 / aprovação PENDING / implementação BLOCKED
 
-## Instrução para Jarvis
+## Agora: revisão final — não implementar
 
-Confirme que o PR #26 foi integrado na `main` em `770ade0` e que os modelos Pydantic estão nesta branch.  Leia `AGENTS.md`, `SDD/rules.md`, `.agents/skills/lcp-implement-issue/SKILL.md`, `docs/PROJECT_SPEC.md`, `docs/ARCHITECTURE.md` e todos os arquivos `SDD/spec/LCP-002/`. Use o checklist abaixo.
+Jarvis lê `AGENTS.md`, `SDD/rules.md`, a Skill `.agents/skills/lcp-implement-issue/SKILL.md`, os modelos da LCP-001 e todos os documentos em `SDD/spec/LCP-002/`.
 
-- Dependência integrada? Branch contém os contratos Pydantic exatos? **Se não, pare.**
-- Contrato v2 aprovado pelo humano e marcado `FROZEN`, com referência? **Se não, somente revise e reporte; não implemente.**
-- Sem conflitos entre esquema, domínios e tests.md? Se houver, proponha Change Request, sem alterar contrato silenciosamente.
+Concentre a revisão **somente** em invariantes observáveis:
+- Após COMMIT, `lcp_app` consegue alterar casos/participantes/evaluation links? As funções transacionais + REVOKE impedem?
+- `Experiment.candidate_ids` e `PolicyDecision.evaluation_ids` reconstruídos na ordem e com repetições previstas pela LCP-001?
+- O papel SECURITY DEFINER foi projetado com privilégios mínimos, search_path seguro e sem janela de EXECUTE PUBLIC?
+- Run nasceu QUEUED/revision 0, `started_at` imutável, e CAS é a única escrita de UPDATE pelo app?
+- DB-07/09/10/15/17/18/19 e AGG-A/B/C, SEC-A, STATE-A têm testes realistas e reproduzíveis?
 
-## Instrução para Maquiavel (somente depois do freeze)
+**Entregar `READY_TO_FREEZE` ou `NEEDS_REVISION`**, com bloqueios concretos e trade-offs. Não inventar testes executados, não tocar `backend/**`, não instalar pacotes, não executar migrações, não fazer merge e **não marcar FROZEN** por conta própria.
 
-Execute `SINGLE_WRITER`; implemente apenas os paths permitidos em `tasks.md`. Respeite FKs compostas, baseline como participante, atomicidade, triggers append-only, checks completos de status/timestamp, Decimal/JSONB string, snapshot canônico e constraints de política. Migrações SQL somente em banco isolado/descartável; não atualizar `backend/app/domain/**` nem `README.md`.
+## Depois da aprovação humana explícita
 
-Implemente testes executáveis DB-01..DB-19, documente comandos/exit codes/resultados reais e prepare PR de implementação contra a branch de planejamento aprovada (ou decisão explícita de Jarvis sobre a base). Nunca force alterações em `main`.
+Somente quando `contract.md` trouxer `FROZEN` e referência de aprovação, Maquiavel executa a Skill de implementação em SINGLE_WRITER, respeitando `tasks.md` e o contrato v3. Mefisto inspeciona código e outputs com `lcp-review-change`, sem alegar delegação que não ocorreu. Um PR revisável com evidências é o resultado, não merge automático.
 
-## Instrução para Mefisto
-
-Use `.agents/skills/lcp-review-change/SKILL.md` e `tests.md`; revise independentemente diff, FKs, trigger deferral, precisão, proveniência, falhas de concorrência e logs. Registre evidência em `validation-result.md` e veredito em `review.md`. Evidência ausente = `NOT_RUN`/`blocked`, não `PASS`.
-
-**Stop conditions:** regressão/ausência dos contratos LCP-001; contrato não FROZEN; alteração de limites de segurança; migração destrutiva não autorizada; dados reais; scope drift; SQL externo não confiável.
+**Stop conditions:** falta de aprovação; contrato divergente da LCP-001; necessidade de alterar `backend/app/domain/**`; comandos destrutivos ou banco real; privilégio do runtime fora do contrato; scope drift.

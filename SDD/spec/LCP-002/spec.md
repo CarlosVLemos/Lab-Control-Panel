@@ -1,53 +1,46 @@
 # LCP-002 — Persistência PostgreSQL e migrações
 
-**Status:** draft
-**Risco:** CRITICAL
+**Status:** draft · **Risco:** CRITICAL
 **Issue:** https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2
 **Branch:** `feat/lcp-002-postgresql-persistence`
-**Owner:** Jarvis (coordenação) · Maquiavel (implementação) · Mefisto (QA)
+**Owners:** Jarvis (coordenação), Maquiavel (único writer/implementação), Mefisto (revisão independente)
 **Modo:** SINGLE_WRITER
 **Aprovação humana:** PENDING
-**Contrato:** `contract.md` — DRAFT v2 (não FROZEN)
+**Contrato:** `contract.md` — **DRAFT v3**, NÃO FROZEN
+**Revisão precedente:** `NEEDS_REVISION` pelo Codex; pontos corrigidos no planejamento, mas ainda não validados em banco.
 
-## Objetivo
+## Dependências e limites
 
-Persistir as entidades da LCP-001 em PostgreSQL com Alembic, manter integridade de projeto/dataset/candidato/experimento, registrar proveniência e garantir execução/decisão recuperáveis após reconexão. Domínio Pydantic independente de SQLAlchemy/FastAPI.
+LCP-001 / PR #26 está integrado à `main` no commit `770ade0`; a branch LCP-002 contém os contratos Pydantic. Ler `AGENTS.md`, `SDD/rules.md`, `docs/PROJECT_SPEC.md`, `docs/ARCHITECTURE.md`, `backend/app/domain/`, `tests.md` e `contract.md`.
 
-## Dependências e gates
+A liberação de Maquiavel **não ocorreu**: nenhuma migração/implementação deve começar enquanto a v3 não for revisada, aprovada explicitamente pelo usuário e marcada FROZEN por Jarvis. Somente após a aprovação humana, executar T-01..T-04.
 
-1. **Dependência atendida:** PR #26 / LCP-001 foi integrado à `main` (commit `770ade0`), e a branch foi sincronizada. Verificar novamente os modelos de `backend/app/domain/` antes de implementar.
-2. Revisar `contract.md` v2, `tasks.md` e `tests.md`. O contrato define explicitamente FKs compostas, inscrição do baseline, status/timestamps, hashes canônicos, Decimal, append-only e referências auditáveis.
-3. Aprovação humana **explícita** da v2, após validar dependências: Jarvis registra a referência em `contract.md`, marca `FROZEN` e atualiza `SDD/index.md`.
-4. Somente então liberar Maquiavel para T-01..T-04; Mefisto valida o diff e o banco de teste reais; humano aprova o merge.
+## Objetivo e resultado mensurável
 
-O Codex **não deve implementar enquanto DRAFT/PENDING**, nem criar banco/migração/serviço por conta própria nesta fase.
+Persistir Projects, versões de datasets com cases, candidatos, experimentos, runs, avaliações e decisões, mantendo estabilidade de fingerprint, pertença de projeto e imutabilidade de conjuntos depois do commit. PostgreSQL e Alembic são a fonte persistente, não memória da API.
 
-## Entregas
+**Entregas:** DDL versionada, FKs compostas, funções de criação atômica de aggregates com ACL, snapshots imutáveis, CAS de runs, UoW/repositórios, Compose PostgreSQL e testes reais com papel de aplicação/CI.
 
-- SQLAlchemy 2 e Alembic, modelos/migração PostgreSQL, repositórios/UoW transacionais.
-- FKs compostas/constraints/triggers e integridade auditável sem supor que JSONB ou Pydantic `frozen` bastem.
-- Snapshots de DatasetVersion, CandidateVersion e PolicyVersion append-only; verificações de fingerprint da LCP-001; ordem estável de cases/IDs.
-- Transições CAS de runs; avaliação e decisão persistidas com vínculos e contexto do projeto.
-- Compose dev com PostgreSQL persistente, CI com testes PostgreSQL reais.
-- Evidência de DB-01..DB-19 e relatório de Mefisto.
+## Regras centrais da v3
 
-## Não fazer
+1. Fronteiras transacionais: funções SECURITY DEFINER criam dataset+cases, experiment+participantes, decision+evaluation links num único agregado; `lcp_app` não tem DML direto nesses conjuntos.
+2. `experiment_candidates.ordinal` preserva tupla ordenada de challengers, exclui baseline (ordinal NULL). DatasetVersion tem >=1 caso e ordinais 0..N-1.
+3. `candidate_versions.project_id` tem FK direta; FKs compostas protegem run/case/baseline/projeto/workload; FK diferida de baseline permanece.
+4. Run inicia `QUEUED, revision=0` e só muda por transição CAS, sem alteração lateral de métricas ou timestamps.
+5. JSONB Decimal em strings; custo NUMERIC sem escala fixa porém finito; arrays evidência sem valores vazios/null.
+6. `PolicyDecision.evaluation_ids` mantém duplicatas como na LCP-001, com PK(decision_id,ordinal). `policy_versions` não tem fingerprint na LCP-002.
+7. Proveniência e hashes têm garantias limitadas: origem declarada, evidências externas opacas, privilégios de DB não substituem assinatura criptográfica.
 
-Worker RQ/Redis, avaliações de agentes, LLM-as-judge, frontend, APIs novas, deploy, autorização de produção, execução de código gerado por modelos, migrações com dados reais, merge automático ou alteração de `README.md`.
+## Critérios de aceite
 
-## Aceite
+DB-01..DB-19 + AGG-A/B/C + SEC-A/STATE-A em `tests.md`, incluindo testes de segunda sessão com `lcp_app`, migrações PostgreSQL reais, persistência pós-restart, validação independente e ausência de regressões em `/health`.
 
-- Alembic sobe banco vazio e é idempotente; dados sobrevivem à reconexão e ao restart seguro.
-- Constraints rejeitam identidades inválidas, órfãos, candidatos/cases fora do experimento, baseline ausente e PASS indevido.
-- Custos e métricas mantêm `Decimal` exato; fingerprint e ordem são reproduzidos.
-- Repositório/trigger protegem imutabilidade; status de run tem transições e concorrência corretas.
-- CI com PostgreSQL real passa e API `/health` continua válida.
-- Mefisto apresenta evidências, limites e riscos; sem promover evidência não verificável como segura.
+## Fora de escopo
 
-## Riscos reconhecidos
+Fila/worker RQ/Redis, API CRUD pública, frontend, execução de código de terceiros, deploy, autenticação multi-tenant, promoção/release, alteração de domínio LCP-001 sem Change Request, modificações em README, dados reais e merge automático.
 
-- Mais FKs compostas e triggers tornam a migração inicial mais trabalhosa; o benefício é rejeitar operações inválidas até quando SQL direto tenta escapar de checagens da aplicação.
-- `policy_versions` é um registro mínimo de referência, não o Policy Engine completo.
-- `evidence_refs` ainda são opacas, sem storage/FK de artefato; o sistema de release futuro não pode inferir que o artefato existe.
-- Fingerprint não equivale a assinatura; papel administrativo do PostgreSQL pode alterar triggers.
-- Se algum detalhe da LCP-001 integrada divergir do contrato v2, permanecer em DRAFT e solicitar Change Request antes de programar.
+## Trade-offs e gate
+
+A fronteira única de escrita evita triggers de contagem por cada associação, mas exige funções seguras e teste de privilégios reais. `SECURITY DEFINER` sem search_path/ACL correto é um risco. Nenhum CI de documentação substitui teste PostgreSQL. Se Mefisto achar novo bloqueio, permanecer em DRAFT e abrir uma revisão dirigida, não introduzir novas abstrações por especulação.
+
+**Próximo passo:** revisão final curta da v3 pelo Codex, registro do parecer, aprovação humana explícita e freeze documentado. Somente então Maquiavel implementa.

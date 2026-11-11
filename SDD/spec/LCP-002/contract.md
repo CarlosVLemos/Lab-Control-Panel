@@ -1,106 +1,107 @@
 # LCP-002 — Contrato técnico de persistência
 
-**State:** DRAFT · **Version:** 2 (revisão após análise do Codex)
+**State:** DRAFT · **Version:** 3 (parecer Codex/Jarvis `NEEDS_REVISION`)
 **Risco:** CRITICAL · **Execution mode:** SINGLE_WRITER
 **Human approval:** PENDING · **Approval reference:** PENDING
-**Dependência:** PR #26 / LCP-001 integrado à `main` em `770ade0851d6ab077bb7fb6ef72fa1328b8c7fec`; esta branch sincronizada com essa base.
+**Dependência:** LCP-001 integrada à `main` no commit `770ade0851d6ab077bb7fb6ef72fa1328b8c7fec`.
+**Status de implementação:** BLOCKED — não programar nem executar migrações antes de aprovação humana explícita.
 
-> Este é um contrato proposto, não uma autorização para implementar. Os tipos e constraints abaixo só serão considerados FROZEN após a aprovação humana. Se o código da LCP-001 integrada mudar, revalidar o mapeamento.
+> Versão proposta para uma última revisão. Este arquivo especifica garantias observáveis pelo papel real de aplicação; o proprietário do banco/migrações permanece privilegiado. Não confundir CI verde de documentação com testes PostgreSQL executados.
 
-## 1. Tipos, identidade e serialização
+## 1. Fronteiras e tipos
 
-- PostgreSQL >=16, SQLAlchemy 2.x, psycopg 3 e Alembic. SQLAlchemy só em infraestrutura; modelos Pydantic LCP-001 permanecem o contrato de domínio. Não editar `backend/app/domain/**` sem Change Request.
-- Todos os IDs de domínio são `TEXT PRIMARY KEY` (ou `TEXT NOT NULL` para FKs), com `CHECK(length(btrim(id))>0)`. **Não converter IDs em UUID**; casos de teste têm IDs textuais dentro de cada versão de dataset.
-- `projects.slug`: `CHECK(slug ~ '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')`. `datasets.key` = identificador lógico do dataset **dentro de um projeto**, com a mesma sintaxe kebab-case; UNIQUE(project_id,key), nunca vazio. Não é nome de arquivo nem versão.
-- `version` e demais referências textuais obrigatórias: `length(btrim(value)) > 0`.
-- `candidate_versions`: UNIQUE(project_id,model_id,version), **não** UNIQUE(project_id,version). A mesma etiqueta `v1` pode existir em modelos distintos; dentro de um mesmo projeto/modelo, cada versão identifica um único snapshot. UNIQUE(dataset_id,version) para datasets; UNIQUE(dataset_version_id,case_id) para casos.
-- Enums SQL exatos:
-  - workload: `RESPONSE`, `TASK`, `CODE`
-  - run status: `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`
-  - evaluation/policy verdict: `PASS`, `FAIL`, `INCONCLUSIVE`, `MANUAL_REVIEW`
-  - member role: `BASELINE`, `CHALLENGER`
-  Armazenar `TEXT` + `CHECK IN (...)`, não enums PostgreSQL customizados nesta etapa.
-- Timestamps: `TIMESTAMPTZ` UTC, timezone-aware no Python. `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`; origem: `origin_kind` (`SYSTEM`, `USER`, `CI`, `IMPORT`) e `origin_ref TEXT NOT NULL` não vazio nas escritas auditáveis; `created_at` é imutável. Não fabricar `origin_ref` como se fosse uma identidade autenticada; identificar job/request/fixture real.
-- Custos: `cost_usd_estimated NUMERIC` **sem scale definido**, convertendo para `Decimal` sem arredondar, e `CHECK(cost_usd_estimated >= 0)` quando não nulo. `NULL` = desconhecido, `0` = medido zero. Tokens e duração: `BIGINT`, `CHECK >= 0` quando não nulos.
-- `EvaluationResult.metrics: dict[str, Decimal]` em JSONB como **objeto de strings decimais**, nunca números binários/float. Exemplo `{"accuracy":"0.9500","loss":"1E-7"}`; codificar `str(Decimal)` e decodificar com `Decimal(str_value)`, preservando escala textual quando relevante. Rejeitar NaN/Infinity e valores que não sejam strings decimais. `artifact_refs`, `evaluation_ids`, `evidence_refs`, `tags`, `candidate_ids` têm representação JSON array de strings com ordem estável, sem números ou `null`.
-- Para snapshots, persistir `canonical_payload TEXT NOT NULL` (JSON UTF-8 com `sort_keys=True`, separadores `(',', ':')`, `ensure_ascii=False`, `allow_nan=False`) e campos indexáveis em tabelas/JSONB. Os fingerprints de LCP-001 são calculados **pelo algoritmo Pydantic original** `content_fingerprint` usando seus respectivos payloads, e não por `jsonb::text`. Na leitura: recomputar, comparar hash, e conferir equivalência entre snapshot canônico e colunas/casos relacionais. A ordem de casos é preservada via `ordinal` único, iniciando em zero.
-- SHA-256: `CHECK(hash ~ '^[0-9a-f]{64}$')` para fingerprints e `spec_sha256` opcional. `source_commit` opcional: `CHECK(source_commit ~ '^[0-9a-f]{7,40}$')`. Fingerprint é verificação de integridade, **não** prova de origem nem assinatura.
+- Stack: PostgreSQL >=16, SQLAlchemy 2.x, psycopg 3 e Alembic; FastAPI/Pydantic no domínio sem acoplamento ao ORM. `backend/app/domain/**` (LCP-001) permanece protegido.
+- IDs de domínio são `TEXT` (nunca trocar por UUID); para textos obrigatórios, `NOT NULL` e `CHECK(length(btrim(value))>0)`. O mapper usa o mesmo `str.strip()` do `Identifier` Pydantic **antes de persistir**; PostgreSQL `btrim` cobre espaços ASCII comuns, **não** promete equivalência com toda a normalização Unicode de Python. Testar ambos os limites, inclusive SQL direto.
+- `projects.slug` e `datasets.key` usam a expressão `^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$`. `datasets.key` é o nome lógico não vazio de um dataset **dentro do projeto**: UNIQUE(project_id,key).
+- `candidate_versions`: UNIQUE(project_id,model_id,version); `dataset_versions`: UNIQUE(dataset_id,version); `dataset_cases`: UNIQUE(dataset_version_id,case_id).
+- SQL `TEXT + CHECK IN`: Workload `RESPONSE/TASK/CODE`; RunStatus `QUEUED/RUNNING/COMPLETED/FAILED/CANCELLED`; Verdict `PASS/FAIL/INCONCLUSIVE/MANUAL_REVIEW`; participant role `BASELINE/CHALLENGER`; origin_kind `SYSTEM/USER/CI/IMPORT`.
+- `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`, origem `origin_kind` e `origin_ref TEXT NOT NULL` não vazio nas entidades auditáveis (versões, experimentos, runs, avaliações e decisões). Guardar UTC e timezone-aware na aplicação; `origin_ref` é uma origem **declarada**, não autenticação.
+- Custo `cost_usd_estimated NUMERIC` sem escala fixa: `CHECK(cost_usd_estimated IS NULL OR (cost_usd_estimated >= 0 AND cost_usd_estimated::text NOT IN ('NaN','Infinity','-Infinity')))`. PostgreSQL aceita valores especiais em NUMERIC; somente `>=0` **não** rejeita `NaN`. `NULL` = não medido; `0` = zero conhecido. Armazenar custo como `Decimal`, sem converter para `float`; round-trip numérico exato, sem promessa de preservar notação textual/exponente para custos. Valores fora do limite de NUMERIC devem falhar explicitamente.
+- Tokens e duração: `BIGINT`, `CHECK(value>=0)` quando não nulo.
+- `EvaluationResult.metrics: dict[str, Decimal]`: JSONB `{"accuracy":"0.9500","loss":"1E-7"}`, com valores **strings** `str(Decimal)`, never float. Converter de volta com `Decimal(value)`; rejeitar entradas não decimais, NaN/Infinity, tipos JSON diferentes de string e perda de precisão. Função de validação imutável SQL `lcp_valid_decimal_metrics(jsonb)` para CHECK em `evaluation_results.metrics`; validar também no mapper Python.
+- Arrays `artifact_refs`, `evidence_refs`, `tags` são JSONB contendo exclusivamente strings não vazias; a função SQL imutável `lcp_valid_identifier_array(jsonb)` confirma tipo array, tipo string de cada elemento e não-vazio após trim. Arrays vazios só quando o Pydantic os permite; `PASS` requer ao menos uma evidência. Strings `null`, vazias e whitespace-only são inválidas, inclusive sob SQL direto. **Não** persistir `candidate_ids` nem `evaluation_ids` em JSONB: suas ordens vêm das relações com `ordinal`.
+- `spec_sha256` opcional e fingerprints obrigatórios: regex `^[0-9a-f]{64}$`; `source_commit` opcional: `^[0-9a-f]{7,40}$`. SHA-256 é detecção de divergência, não prova criptográfica de autoria.
 
-## 2. Esquema e relacionamentos mínimos
+## 2. Esquema e constraints
 
-Tabelas são criadas exclusivamente por migração Alembic, sem `Base.metadata.create_all()` na inicialização. Toda FK tem política `ON DELETE RESTRICT` para histórico referenciado, salvo justificativa explícita posterior.
+Alembic cria o esquema (sem `Base.metadata.create_all()` nem migration no startup). FKs compostas são a proteção para pertença ao mesmo projeto/experimento. Relações históricas usam `ON DELETE RESTRICT`.
 
-| Tabela | Campos principais | Integridade adicional |
+| Tabela | Colunas principais | Garantia essencial |
 | --- | --- | --- |
-| `projects` | id, slug, name, created_at | PK; UNIQUE(slug); regex slug; não vazio |
-| `datasets` | id, project_id, key, created_at | FK project; UNIQUE(project_id,key); UNIQUE(id,project_id) |
-| `dataset_versions` | id, dataset_id, project_id, version, fingerprint, canonical_payload, created_at, origin_kind/ref | FK(dataset_id,project_id) -> datasets(id,project_id); UNIQUE(dataset_id,version); UNIQUE(id,project_id) |
-| `dataset_cases` | dataset_version_id, case_id, ordinal, input JSONB, expected JSONB, tags JSONB | PK(dataset_version_id,case_id); UNIQUE(dataset_version_id,ordinal); `ordinal>=0`; `case_id` não vazio |
-| `candidate_versions` | id, project_id, model_id, version, workload, config JSONB, spec_sha256?, source_commit?, fingerprint, canonical_payload, created_at, origin_kind/ref | UNIQUE(project_id,model_id,version); UNIQUE(id,project_id); UNIQUE(id,project_id,workload) |
-| `experiments` | id, project_id, dataset_version_id, workload, baseline_candidate_id, baseline_role constant `BASELINE`, hypothesis, created_at, origin_kind/ref | FK(dataset_version_id,project_id) -> dataset_versions(id,project_id); FK(baseline_candidate_id,project_id,workload) -> candidate_versions; UNIQUE(id,project_id,workload); UNIQUE(id,project_id,dataset_version_id) |
-| `experiment_candidates` | experiment_id, project_id, workload, candidate_id, role | PK(experiment_id,candidate_id); FK(experiment_id,project_id,workload) -> experiments; FK(candidate_id,project_id,workload) -> candidate_versions; UNIQUE(experiment_id,candidate_id,role); UNIQUE parcial(experiment_id) WHERE role='BASELINE' |
-| `execution_runs` | id, experiment_id, project_id, dataset_version_id, test_case_id, candidate_id, workload, status, started_at?, finished_at?, trace_id?, artifact_refs JSONB, tokens/custo/duração?, revision, created_at, origin_kind/ref | FK(experiment_id,project_id,dataset_version_id) -> experiments; FK(dataset_version_id,test_case_id) -> dataset_cases; FK(experiment_id,candidate_id) -> experiment_candidates; FK(candidate_id,project_id,workload) -> candidate_versions; UNIQUE(id,project_id); índices (experiment_id,status), (candidate_id,status) |
-| `evaluation_results` | id, run_id, project_id, evaluator_id, verdict, evidence_refs JSONB, critical_failures, metrics JSONB, created_at, origin_kind/ref | FK(run_id,project_id) -> execution_runs; UNIQUE(id,project_id); CHECK fail-closed |
-| `policy_versions` | id, project_id, version, config JSONB, fingerprint, created_at, origin_kind/ref | FK project; UNIQUE(project_id,version); UNIQUE(id,project_id). Snapshot mínimo de versão de política para FK; **a lógica Policy Engine é futura** |
-| `policy_decisions` | id, project_id, policy_version_id, subject_id, verdict, evidence_refs JSONB, reason, critical_failures, created_at, origin_kind/ref | FK(policy_version_id,project_id) -> policy_versions; FK(subject_id,project_id) -> candidate_versions; UNIQUE(id,project_id); CHECK fail-closed |
-| `policy_decision_evaluations` | decision_id, evaluation_id, project_id, ordinal | PK(decision_id,evaluation_id); FK(decision_id,project_id) -> policy_decisions; FK(evaluation_id,project_id) -> evaluation_results; UNIQUE(decision_id,ordinal) |
+| `projects` | id, slug, name, created_at | PK id, UNIQUE slug, regex e não-vazio |
+| `datasets` | id, project_id, key, created_at | FK project, UNIQUE(project_id,key), UNIQUE(id,project_id) |
+| `dataset_versions` | id, dataset_id, project_id, version, fingerprint, canonical_payload TEXT, origin_kind/ref, created_at | FK(dataset_id,project_id), UNIQUE(dataset_id,version), UNIQUE(id,project_id), snapshot fechado via função |
+| `dataset_cases` | dataset_version_id, case_id, ordinal, input JSONB, expected JSONB, tags JSONB | PK(dataset_version_id,case_id), UNIQUE(dataset_version_id,ordinal), ordinal >=0; conjunto fechado na criação |
+| `candidate_versions` | id, project_id, model_id, version, workload, config JSONB, spec_sha256?, source_commit?, fingerprint, canonical_payload TEXT, origin_kind/ref, created_at | FK(project_id)->projects, UNIQUE(project_id,model_id,version), UNIQUE(id,project_id), UNIQUE(id,project_id,workload), append-only |
+| `experiments` | id, project_id, dataset_version_id, workload, baseline_candidate_id, baseline_role='BASELINE', hypothesis, origin_kind/ref, created_at | FK(dataset_version_id,project_id), FK(baseline_candidate_id,project_id,workload), UNIQUE(id,project_id,workload), UNIQUE(id,project_id,dataset_version_id) |
+| `experiment_candidates` | experiment_id, project_id, workload, candidate_id, role, ordinal NULLABLE | PK(experiment_id,candidate_id); FK(experiment_id,project_id,workload), FK(candidate_id,project_id,workload); UNIQUE(experiment_id,candidate_id,role) **NOT DEFERRABLE**; UNIQUE(experiment_id,ordinal); UNIQUE parcial(experiment_id) WHERE role='BASELINE' |
+| `execution_runs` | id, experiment_id, project_id, dataset_version_id, test_case_id, candidate_id, workload, status, started_at?, finished_at?, trace_id?, artifact_refs JSONB, usage?, revision, origin_kind/ref, created_at | FK(experiment_id,project_id,dataset_version_id), FK(dataset_version_id,test_case_id), FK(experiment_id,candidate_id), FK(candidate_id,project_id,workload), UNIQUE(id,project_id), índices (experiment_id,status), (candidate_id,status) |
+| `evaluation_results` | id, run_id, project_id, evaluator_id, verdict, evidence_refs JSONB, critical_failures, metrics JSONB, origin_kind/ref, created_at | FK(run_id,project_id), UNIQUE(id,project_id), CHECK enum/evidence/metrics; append-only |
+| `policy_versions` | id, project_id, version, config JSONB, origin_kind/ref, created_at | FK project, UNIQUE(project_id,version), UNIQUE(id,project_id); versão de referência **sem fingerprint nesta issue**, sem Policy Engine |
+| `policy_decisions` | id, project_id, policy_version_id, subject_id, verdict, evidence_refs JSONB, reason, critical_failures, origin_kind/ref, created_at | FK(policy_version_id,project_id), FK(subject_id,project_id)->candidate_versions, UNIQUE(id,project_id), CHECK PASS/evidências; conjunto fechado via função |
+| `policy_decision_evaluations` | decision_id, evaluation_id, project_id, ordinal | **PK(decision_id,ordinal)**; FK(decision_id,project_id)->policy_decisions; FK(evaluation_id,project_id)->evaluation_results; `ordinal>=0`; **sem UNIQUE(decision_id,evaluation_id)** |
 
-`policy_decisions.subject_id` representa **somente CandidateVersion no MVP**. Uma avaliação do baseline pode servir de evidência para uma decisão sobre o challenger; por isso o join exige **mesmo projeto**, não mesmo candidato. Reconstituir `evaluation_ids` no domínio pela ordem `ordinal`, sem campo duplicado JSONB para IDs. `policy_version_id` referencia o registro mínimo `policy_versions`, sem antecipar a avaliação de políticas.
+**Ordem e compatibilidade:** `experiment_candidates.ordinal IS NULL` apenas para `BASELINE`, e `ordinal>=0` para `CHALLENGER` (CHECK de exclusividade). Challengers têm ordinais 0..N-1, sem lacunas, persistidos na ordem de `Experiment.candidate_ids`. O baseline não aparece no retorno da tupla. Para `policy_decision_evaluations`, `ordinal` é 0..N-1 e repetições de `evaluation_id` são **permitidas** porque o contrato Pydantic LCP-001 permite; a aplicação reconstrói `PolicyDecision.evaluation_ids` com repetições, sem ordenação alfabética. `dataset_cases` tem ordinal 0..N-1 e >=1 caso.
 
-**Evidências externas:** `evidence_refs` e `artifact_refs` ainda são identificadores opacos de artefatos futuros e **não possuem FK** nesta issue. A camada de persistência valida formato/não-vazio e guarda proveniência declarada, mas **não consegue provar que o artefato existe**. Nenhum Release Controller pode tratar essa existência como verificada até uma Issue posterior implementar armazenamento/validação de evidências.
+**Integridade de baseline:** adicionar a FK `(experiments.id,baseline_candidate_id,baseline_role)` -> `experiment_candidates(experiment_id,candidate_id,role)` como `DEFERRABLE INITIALLY DEFERRED`. Criar as tabelas antes de adicionar a FK de retorno para resolver o ciclo DDL. A `UNIQUE(experiment_id,candidate_id,role)` referenciada permanece não-diferível. A FK composta impede baseline ausente ou inscrito como challenger no commit.
 
-## 3. Garantias de pertencimento e atomicidade
+**Referências externas:** `evidence_refs` e `artifact_refs` ainda são IDs opacos **sem FK para storage de artefatos**. A persistência valida forma, não existência nem autenticidade. Um `PolicyDecision.PASS` **não** autoriza automaticamente release/promoção.
 
-Fazer as garantias de projeto/caso/candidato com FKs compostas declaradas na seção 2, não apenas `SELECT` de aplicação:
+## 3. Fronteira única de escrita e imutabilidade
 
-1. `experiment.project_id` coincide com a versão do dataset, projeto e workload do baseline; o par/campo composto é obrigatório.
-2. `experiment_candidates` vincula candidatos do mesmo projeto/workload do experimento; inclui baseline como `BASELINE` e no mínimo um `CHALLENGER` distinto.
-3. **Baseline presente:** adicionar FK composta `(experiments.id, baseline_candidate_id, baseline_role)` -> `experiment_candidates(experiment_id,candidate_id,role)`, `DEFERRABLE INITIALLY DEFERRED`. `baseline_role TEXT NOT NULL DEFAULT 'BASELINE' CHECK(baseline_role='BASELINE')`. O ciclo de FKs é resolvido **numa única transação**.
-4. **Ao menos um challenger:** constraint trigger diferida (`DEFERRABLE INITIALLY DEFERRED`) verifica no commit que cada experimento tem >=1 `CHALLENGER`; execução apenas para inserts de experimentos e membros. Como experimentos/membros são append-only, a cardinalidade não diminui depois.
-5. `execution_runs` carrega `dataset_version_id` e `project_id` redundantes, protegidos por FKs compostas; `test_case_id` é o ID textual do TestCase na versão, não PK global. A FK em `(experiment_id,candidate_id)` impede executar candidato não participante. A FK `(candidate_id,project_id,workload)` impede executar workload divergente.
-6. Criar experimento + baseline + challengers **atomicamente**; criar run só após checagem de transição e identidade; falha de qualquer FK/trigger faz rollback integral. Race conditions devem ser testadas com duas sessões PostgreSQL reais.
+**Escolha para v3: operações transacionais por agregado + ACL. Não criar um trigger diferido por cada linha de associação.**
 
-Não adicionar triggers para simular regras abstratas além das invariantes acima. Testes de inserção SQL direta devem provar que uma associação de outro projeto, caso de outra versão ou baseline não inscrito falham de fato.
+- Papéis distintos `lcp_migrator` (DDL/ownership), `lcp_aggregate_writer` (NOLOGIN, proprietário das funções com apenas os privilégios mínimos de DML) e `lcp_app` (LOGIN, sem ownership/membership do migrator/writer). O runtime `lcp_app` **não** recebe INSERT/UPDATE/DELETE/TRUNCATE em `dataset_versions`, `dataset_cases`, `experiments`, `experiment_candidates`, `policy_decisions` nem `policy_decision_evaluations`. Em tabelas de snapshot `candidate_versions`, `policy_versions` e `evaluation_results`, INSERT normal permitido mas UPDATE/DELETE/TRUNCATE negados; triggers append-only cobrem alterações mesmo por papéis escritores.
+- Criar funções de banco, `SECURITY DEFINER`, com owner `lcp_aggregate_writer` e `EXECUTE` **somente** para `lcp_app`. Revogar `PUBLIC EXECUTE` no mesmo transaction block da criação. Fixar `SET search_path = pg_catalog, lcp_private, pg_temp`, qualificar tabelas, não usar SQL dinâmico nem dar CREATE em schemas de confiança ao runtime. O dono dessas funções **não** pode desabilitar triggers, possuir as tabelas ou aplicar migrations. Não confiar apenas em `SET ROLE`/convenção de aplicação.
+- Interfaces canônicas (argumentos de texto/JSON são validados como contratos Pydantic pelo mapper e como estrutura SQL obrigatória pela função):
+  - `lcp_create_dataset_version(project_id TEXT, snapshot TEXT, fingerprint TEXT, origin_kind TEXT, origin_ref TEXT) RETURNS TEXT`: a função extrai `DatasetVersion.id/dataset_id/version/cases` do snapshot; insere versão e **todos** os cases em uma transação do chamador; rejeita array vazio, IDs duplicados e ordinais não contíguos. Não existe parâmetro para acrescentar case a versão pré-existente.
+  - `lcp_create_experiment(project_id TEXT, snapshot JSONB, workload TEXT, origin_kind TEXT, origin_ref TEXT) RETURNS TEXT`: extrai `Experiment` validado, insere cabeçalho, baseline (`role=BASELINE,ordinal=NULL`) e challengers na ordem original (`role=CHALLENGER,ordinal=0..N-1`). Exige ao menos um challenger, IDs distintos e projeto/workload coincidentes; FK diferida do baseline valida no COMMIT. Não permite adicionar candidato a experimento existente.
+  - `lcp_create_policy_decision(project_id TEXT, snapshot JSONB, origin_kind TEXT, origin_ref TEXT) RETURNS TEXT`: insere decisão e **todas** as referências a avaliações ordenadas em um único agregado; preserva IDs repetidos; verifica FKs do mesmo projeto; `PASS` exige evidência válida, falhas críticas zero e >=1 avaliação. Não permite acrescentar vínculo a decisão preexistente.
+  - `lcp_transition_run(run_id TEXT, expected_status TEXT, expected_revision INTEGER, target_status TEXT, changes JSONB) RETURNS INTEGER`: valida estado, allowed fields e transição com compare-and-swap, atualiza status/revision e retorna nova revisão ou conflito explícito.
+- A função SQL é **atômica como uma única operação de escrita** dentro da transação PostgreSQL do chamador; não faz COMMIT autônomo. A aplicação confirma/rollback a transação; outra sessão não consegue acrescentar elementos depois que a versão/experimento/decisão foi criada porque perdeu permissão de INSERT direto e as funções somente criam novos agregados com IDs únicos.
+- Permissões para `lcp_app` incluem somente SELECT das tabelas necessárias, INSERT de registros pontuais permitidos (`projects/datasets/candidate_versions/execution_runs/evaluation_results/policy_versions`), EXECUTE das funções acima e nenhuma permissão TRUNCATE ou de ownership. UPDATE de `execution_runs` só pelo `lcp_transition_run`; migração pode exercer privilégios administrativos exclusivamente em ambiente de migração. `lcp_app` não tem CREATE em `public`/`lcp_private`, não pode criar objetos ou reconfigurar triggers/ACL.
+- Triggers simples bloqueiam UPDATE/DELETE de tabelas append-only inclusive quando invocados pelo escritor proprietário da função; os inserts iniciais são permitidos. Para agregados, a **completude** é garantida por função de criação + bloqueio de DML direto, e não só por bloquear UPDATE/DELETE. Constraints de FK/CHECK continuam protegendo contra erros internos da função.
+- Sob superusuário, migração privilegiada ou alteração de DDL não há garantia criptográfica WORM. Informar o limite e testar usando o papel **real** `lcp_app` em duas conexões.
 
-## 4. Status, vereditos e transações
+## 4. Contratos da LCP-001 e fingerprints
 
-### ExecutionRun
+- O `canonical_payload TEXT` do dataset armazena a representação completa reconstruível de `DatasetVersion.model_dump(mode='json',exclude={'fingerprint'})` (inclui `id`; cases ordenados); o **hash** é calculado exclusivamente sobre `{'dataset_id': model.dataset_id,'version': model.version,'cases':[case.model_dump(mode='json')...]}`. **Não** incluir `DatasetVersion.id` no hash, como manda a LCP-001.
+- O snapshot de `CandidateVersion` armazena `CandidateVersion.model_dump(mode='json',exclude={'fingerprint'})`, incluindo `id`, `version`, `workload`, `model_id`, `config`, `spec_sha256` e `source_commit`. O hash é `content_fingerprint` sobre esse dump completo **sem** `fingerprint`.
+- Serialização do snapshot: `json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False)`, UTF-8. `canonical_payload TEXT` e projeções JSONB/colunas são conferidos na leitura. JSONB não define a serialização do fingerprint; as **ordens dos arrays** são preservadas por `ordinal` e pelo snapshot.
+- `get_dataset_version` / `get_candidate_version` reconstroem o Pydantic **sem** metadados exclusivos da persistência (`project_id`, `revision`, `origin_*`, `created_at`, `workload` de experimento); recalculam o fingerprint pela implementação da LCP-001 e verificam igualdade com o armazenado e com as projeções relacionais. Divergência = `SnapshotIntegrityError`. Nunca normalizar hash silenciosamente.
+- `policy_versions` é somente uma linha imutável com `id/project_id/version/config` auditáveis; **nenhum fingerprint nesta issue**. Uma versão de política com hash verificável exigirá algoritmo e extensão de domínio próprios, em issue posterior.
+- Identificadores recebidos são normalizados via Pydantic `Identifier` antes da escrita. Banco rejeita IDs vazios, com CHECK ASCII básico; não prometer que `btrim` detecta exatamente o mesmo conjunto Unicode de `str.strip()`. Rejeitar payloads não canônicos e registrar erro tipado; testes de strings contendo espaços ASCII e NBSP nas fronteiras adequadas.
 
-SQL CHECK obrigatório (além do `status IN (...)`):
+## 5. ExecutionRun: estados, permissões e concorrência
 
-- `QUEUED`: `started_at IS NULL AND finished_at IS NULL`.
-- `RUNNING`: `started_at IS NOT NULL AND finished_at IS NULL`.
-- `COMPLETED`: `started_at IS NOT NULL AND finished_at IS NOT NULL`.
-- `FAILED` e `CANCELLED`: `finished_at IS NOT NULL`; `started_at` pode ser nulo se falhou/cancelou antes de iniciar.
-- Sempre que ambos não nulos: `finished_at >= started_at`.
-- `revision INTEGER NOT NULL DEFAULT 0 CHECK(revision>=0)`; tokens, custo, duração não negativos; `artifact_refs` JSON array.
+- `execution_runs` sempre nasce com `status='QUEUED'`, `revision=0`, `started_at=NULL`, `finished_at=NULL`; além de DEFAULT, trigger `BEFORE INSERT` rejeita qualquer estado/revision inicial incompatível. Importação histórica de runs fora do escopo.
+- CHECK SQL:
+  - `QUEUED`: started_at IS NULL e finished_at IS NULL
+  - `RUNNING`: started_at IS NOT NULL e finished_at IS NULL
+  - `COMPLETED`: started_at IS NOT NULL e finished_at IS NOT NULL
+  - `FAILED`/`CANCELLED`: finished_at IS NOT NULL; started_at pode ser NULL se finalizado antes de iniciar
+  - Se ambos não NULL: finished_at >= started_at
+  - Revision INTEGER >=0; usage não-negativo/finito; artifact_refs array de IDs válidos.
+- Transições permitidas (LCP-001): `QUEUED -> RUNNING | FAILED | CANCELLED`; `RUNNING -> COMPLETED | FAILED | CANCELLED`; estados terminais não reabrem. Sem atualizações de mesmo estado, nem mesmo para métricas: o MVP registra usage/artefatos ao mudar status; telemetria incremental é uma evolução futura.
+- `started_at` só pode ser definida ao entrar em RUNNING, e **não pode ser substituída depois**; `finished_at` só é preenchida na transição terminal, exatamente uma vez. Campos de identidade/FK, `created_at` e `origin_*` nunca mudam. Campos `usage`, `trace_id` e `artifact_refs` só mudam durante uma transição válida (não por UPDATE lateral).
+- `lcp_transition_run` executa um único `UPDATE ... WHERE id=:id AND status=:expected_status AND revision=:expected_revision`; em sucesso, revision incrementa exatamente 1; em `rowcount=0`, retorna erro tipado `ConcurrencyConflict` (não sobrescreve resultados). Trigger de UPDATE valida o grafo de estados, imutabilidade e incremento, inclusive SQL direto realizado por papel privilegiado. Papel runtime não recebe UPDATE direto para não contornar CAS.
+- Repositório transacional via SQLAlchemy/UoW, sem sessão global. `get_*` reconstrói Pydantic; conflitos de FK/UNIQUE/concorrência mapeados para exceções tipadas. Persistência não habilita promoção nem altera automaticamente vereditos.
 
-No serviço, `transition_run(run_id,expected_status,target_status,expected_revision,timestamps)` valida `assert_run_transition` de LCP-001, faz **um** UPDATE condicional com `WHERE id=:id AND status=:expected_status AND revision=:expected_revision`, incrementa revision e exige `rowcount=1`. `0` = `ConcurrencyConflict` explícito. Um trigger PostgreSQL compara `OLD.status`/`NEW.status` para rejeitar transições fora do grafo, revisões que não incrementam e alterações indevidas dos campos de identidade. Estado terminal não reabre. Testes cobrem SQL direto e duas sessões concorrentes.
+## 6. Avaliações, evidências e decisões
 
-### EvaluationResult / PolicyDecision
+- `evaluation_results.critical_failures` e `policy_decisions.critical_failures`: INTEGER NOT NULL CHECK >=0. `PASS` exige critical_failures=0, `jsonb_array_length(evidence_refs)>0` e todos os IDs de evidência válidos (via `lcp_valid_identifier_array`). `FAIL/INCONCLUSIVE/MANUAL_REVIEW` não passam a PASS.
+- `PolicyDecision.PASS` também requer pelo menos um registro em `policy_decision_evaluations`. A função `lcp_create_policy_decision` realiza a validação **antes de inserir o agregado**; sem INSERT direto pelo runtime, não é necessário trigger diferido para contagem. A integridade de FK garante que cada avaliação existe no mesmo projeto.
+- `policy_decisions.subject_id` referencia exclusivamente `CandidateVersion` no MVP; a mesma avaliação de baseline pode constar em decisão do challenger se o projeto coincidir. Isso **não prova** que a avaliação pertence ao mesmo experimento; tal relevância é decisão futura do Policy Engine.
+- `PolicyDecision.evaluation_ids` pode conter IDs repetidos na LCP-001. A tabela de associação usa `PK(decision_id,ordinal)`, não `PK(decision_id,evaluation_id)`. Reconstituir pela ordem dos ordinais, preservando duplicatas; validar tamanho >=1 somente para PASS. Nenhuma adição após o agregado fechado.
+- As `evidence_refs`/artefatos são **opacos**; formato/registro não implica existência/autenticidade. Nenhum release é liberado por essa etapa.
 
-- `critical_failures INTEGER NOT NULL CHECK(critical_failures>=0)`.
-- `PASS` exige `critical_failures=0` e pelo menos uma evidência (`jsonb_typeof(evidence_refs)='array'` e `jsonb_array_length(evidence_refs)>0`).
-- `PolicyDecision.PASS` também exige ao menos uma associação `policy_decision_evaluations`. Um constraint trigger diferido verifica a contagem ao commit.
-- `FAIL`, `INCONCLUSIVE` e `MANUAL_REVIEW` permanecem estados distintos; a persistência não transforma qualquer um em `PASS`.
-- `PolicyDecision` e avaliações são criadas em transação; IDs de avaliações só apontam para avaliações reais do mesmo projeto. `PolicyDecision` e join `policy_decision_evaluations` são append-only. Se PASS referenciar evidência externa não verificável, a **persistência** registra a declaração, mas **não autoriza promoção automática**.
+## 7. Migrações, testes e limites de escopo
 
-## 5. Append-only e auditoria
+- Migration Alembic cria papéis/privileges quando as permissões do ambiente permitirem; documentar bootstrap de roles quando a CI/Compose os prover externamente. O teste real **deve** conectar como `lcp_app`, não como owner/superusuário, e demonstrar `permission denied` em INSERT tardio, UPDATE e TRUNCATE. Provisionar grants/revokes sob migração, não via runtime.
+- `alembic upgrade head` no banco descartável e segunda execução idempotente; rollback `downgrade` **apenas** em banco de teste, com advertência de perda de dados. Docker Compose com PostgreSQL healthcheck/volume nomeado sem `down -v` não autorizado.
+- Suite pytest/CI em PostgreSQL real cobrindo DB-01..DB-19 do plano atualizado, regressão `/health`, triggers, FKs, papel de aplicação, concorrência, ordem e Decimal. Mocks/SQLite não substituem estas provas.
+- Não implementar worker/Redis/RQ, UI, endpoints públicos, Policy Engine, geração/execução de código hostil, deploy real, migração de dados de produção nem alteração de `README.md`. `Allowed paths` definidos em `tasks.md`.
 
-- Adicionar triggers PostgreSQL de bloqueio `UPDATE/DELETE` para `dataset_versions`, `dataset_cases`, `candidate_versions`, `experiments`, `experiment_candidates`, `policy_versions`, `evaluation_results`, `policy_decisions` e `policy_decision_evaluations`. `created_at`, `origin_kind/ref` são escritos na criação e não editados; `ON DELETE RESTRICT` protege referências.
-- Os repositórios não expõem `update/delete` dessas tabelas. Contas normais da aplicação **não podem desabilitar triggers nem aplicar migrations**; separar papel de migração e papel de aplicação.
-- Superusuários e operadores privilegiados podem modificar triggers/dados: esta é uma garantia de append-only sob papéis de aplicação, **não WORM criptográfico**. Evidência de origem exige mecanismo assinado em futuro escopo.
-- `get_dataset_version` reconstrói cases por `ordinal` e verifica payload canônico, colunas e fingerprint calculado como a LCP-001; `get_candidate_version` faz verificação análoga. Divergência = `SnapshotIntegrityError`, nunca correção silenciosa.
-- `created_at`, `origin_kind/ref` são obrigatórios ao criar avaliação, decisão e snapshots. `origin_ref` identifica origem registrada, não prova autenticidade de usuário. Falhas e conflitos são exceções tipadas; rollback garante que decisões parciais não persistam.
+## 8. Gate de aprovação
 
-## 6. Migração, ambiente e limites
-
-- Alembic é a única via para DDL; segunda execução de `upgrade head` deve ser idempotente. Migração cria constraints, triggers, índices e privilégios necessários. Sem auto-migration no startup da API.
-- Docker Compose de desenvolvimento sobe PostgreSQL com healthcheck e volume nomeado; **não executar `down -v` em volume não descartável**. Configuração via `DATABASE_URL` e variáveis de exemplo, sem segredos reais versionados.
-- CI usa PostgreSQL real descartável. Testar constraint trigger diferida (incluindo rollback), FKs compostas, snapshots, precisão Decimal, concorrência CAS e `/health`. Testes destructive somente no banco descartável.
-- `downgrade` só em ambiente de teste criado para esse fim; a migração é **destrutiva** para os dados que forem removidos. Não prometer rollback de dados em produção sem backup.
-- Fora do escopo: endpoints públicos, Redis/RQ, frontend, deploy, código de terceiros, liberação de modelos e avaliação LLM. `README.md` permanece compacto; paths permitidos em `tasks.md`.
-
-## 7. Aprovação
-
-**DRAFT v2 — aprovação humana PENDING.** Não iniciar implementação nem alterar `backend/app/domain/**` enquanto esta branch não estiver alinhada ao contrato Pydantic integrado e o usuário não aprovar este contrato explicitamente. **Dependência de integração: atendida; aprovação: pendente.** Mudanças posteriores exigem Change Request documentada.
+**DRAFT v3 — PENDING.** O veredito anterior foi `NEEDS_REVISION`. Este arquivo endereça os pontos levantados, **mas ainda não foi revisto nem aprovado**. Jarvis só marca `FROZEN` após revisão independente final, aprovação humana explícita e registro da referência no contrato/índice. Alterações depois do freeze exigem Change Request.
