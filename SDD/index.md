@@ -2,6 +2,6 @@
 
 | ID | Title | State | Issue | Contract | Review |
 | --- | --- | --- | --- | --- | --- |
-| LCP-002 | Persistência PostgreSQL e migrações | `draft` — parecer NEEDS_REVISION; aprovação humana pendente | [#2](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2) | [DRAFT v3](spec/LCP-002/contract.md) | Aguardando nova revisão |
+| LCP-002 | Persistência PostgreSQL e migrações | `ready` — implementação liberada, ainda não concluída | [#2](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2) | [FROZEN MVP v4](spec/LCP-002/contract.md) · [CR-001](spec/LCP-002/CHANGE_REQUEST-001.md) | Pendente: código e testes reais |
 
-A dependência LCP-001 está integrada (`770ade0`). A LCP-002 é planejamento CRITICAL, sem autorização de implementação. Jarvis só marca `ready` e `FROZEN` após nova revisão e aprovação humana registrada. Nenhuma Spec está `in_progress`.
+Autorização do usuário em 2026-11-11 para simplificar e executar um MVP demonstrável. A fase `ready` não implica testes aprovados, revisão concluída, merge ou release.

@@ -1,46 +1,18 @@
-# LCP-002 — Tarefas e ownership
+# LCP-002 — Tarefas executáveis
 
-**Execution mode:** SINGLE_WRITER
-**Risk track:** CRITICAL
-**Contract state:** DRAFT v2 — implementação bloqueada
-**Dependência:** LCP-001 / PR #26 integrado à `main` em `770ade0`; branch sincronizada. **Bloqueio restante:** aprovação humana da v2.
+**Mode:** SINGLE_WRITER · **Contrato:** FROZEN MVP v4 · **Aprovação:** CR-001
+**Owner:** Maquiavel (implementação). Mefisto só revisa depois, sem escrever o código que julga.
 
-## Ownership e ordem
+| Ordem | Entrega | Prova |
+| --- | --- | --- |
+| T-01 | SQLAlchemy, conexão/sessão, PostgreSQL Compose, Alembic | M-01/02 |
+| T-02 | Sete tabelas, JSONB ordenado, mappers Pydantic e constraints | M-03/04/05/08 |
+| T-03 | Repositórios transacionais + CAS de runs + fail-closed de decisões | M-05/06/07 |
+| T-04 | Testes PostgreSQL, CI, Dockerfile não-root e evidências | M-01..M-10 |
+| V-01 | Revisão independente de diff, SQL, tests, regressões e limitações | review.md/validation-result.md |
 
-| ID | Responsável principal | Trabalho | Dependência | Evidência |
-| --- | --- | --- | --- | --- |
-| P-01 | Jarvis | Validar dependência, coletar aprovação, fixar versão do contrato e registrar Spec no índice | PR #26 | Aprovação rastreável |
-| T-01 | Maquiavel | Configuração PostgreSQL/Compose, SQLAlchemy, sessões e Alembic sem `create_all` | P-01 | Migração em banco vazio |
-| T-02 | Maquiavel | Tabelas, FKs compostas, triggers diferidos, snapshot canônico/Decimal e mapeamento Pydantic | T-01 | Testes de round-trip/constraints |
-| T-03 | Maquiavel | Repositórios transacionais, política/evidências referenciais e transições CAS de runs | T-02 | Persistência, conflitos, rollback |
-| T-04 | Maquiavel | Testes de integração DB-01..DB-19, CI PostgreSQL, exemplo seguro de configuração | T-03 | CI e logs reproduzíveis |
-| V-01 | Mefisto | Inspeção independente do diff, migrations, segurança, observabilidade e regressões | T-04 | `validation-result.md` e `review.md` |
-| C-01 | Jarvis | Atualizar índice e preparar handoff para revisão humana; não fazer merge | V-01 | PR e resumo de riscos |
+**Allowed paths:** `backend/app/db/**`, `backend/app/repositories/**`, `backend/app/services/**`, `backend/alembic/**`, `backend/alembic.ini`, `backend/requirements*.txt`, `backend/tests/**`, `backend/app/main.py` (somente wiring mínimo), `backend/Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.example`, `.github/workflows/ci.yml`, `SDD/spec/LCP-002/**`, `SDD/index.md`.
 
-**Aviso:** esta v2 adiciona gatilhos e `policy_versions` mínimos; são parte do contrato de persistência, não autorização para implementar o Policy Engine.
+**Protegidos:** `backend/app/domain/**`, `frontend/**`, `k8s/**`, `README.md`, `AGENTS.md`, `.agents/**`, `SDD/rules.md`.
 
-**Van Gogh:** sem tarefa nesta fase (sem frontend, sem segundo writer).
-
-## Allowed paths (somente após freeze)
-
-- `backend/app/db/**`, `backend/app/repositories/**`, `backend/app/services/**`
-- `backend/alembic/**`, `backend/alembic.ini`
-- `backend/requirements.txt`, `backend/requirements-dev.txt`
-- `backend/tests/**`, `backend/app/main.py` (somente wiring mínimo/health)
-- `backend/Dockerfile`, `docker-compose.yml`, `.env.example`
-- `.github/workflows/ci.yml`
-- `SDD/spec/LCP-002/**`, `SDD/index.md`
-
-## Protected/out of scope
-
-- `backend/app/domain/**` — contratos da LCP-001 só mudam mediante Change Request.
-- `README.md`, `frontend/**`, `.codex/**`, `.agents/**`, `AGENTS.md`, `SDD/rules.md` — não alterar.
-- `.env`, segredos, dados reais, workflows de deploy, código de terceiros; não executar `docker compose down -v` contra volume não descartável.
-
-## Handoff de implementação
-
-Maquiavel entrega lista dos arquivos, decisões, comandos efetivamente executados com resultados, riscos e referências de PR. Mefisto não confia apenas nesse resumo: inspeciona commit e produz evidência independente. Se faltarem permissões/ferramentas, marcar NOT_RUN ou BLOCKED, sem resultados simulados.
-
-## Change Request
-
-Mudança de esquema acordado, tipo de ID, domínio, auth, API, migration potencialmente destrutiva ou allowed paths: **parar**. Documentar motivo, impacto e plano de testes; Jarvis devolve contrato para DRAFT e requer novo gate humano.
+**Stop conditions:** qualquer banco não descartável para migração destrutiva, escopo externo, alteração da LCP-001, segredos, execução de código arbitrário ou contrato público. Reportar impedimento real; não trocar implementação por especulação.
