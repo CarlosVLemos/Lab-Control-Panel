@@ -1,5 +1,5 @@
 export interface ModelDescriptor { id: string; label: string }
-export interface Verdict { output: { label: string }; passed: boolean }
+export interface Verdict { output: { label?: string } | null; passed: boolean }
 export interface ExperimentCase {
   id: string
   input: { text: string }
@@ -15,6 +15,10 @@ export interface ExperimentReport {
   candidate: ModelDescriptor
   summary: { baseline: { passed: number; total: number }; candidate: { passed: number; total: number } }
   cases: ExperimentCase[]
+}
+
+export function displayOutput(output: Verdict['output']): string {
+  return output?.label ?? 'Indisponível'
 }
 
 export type ModelKey = 'baseline' | 'candidate'

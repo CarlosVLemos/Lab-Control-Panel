@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { fixtureSource } from './data/synthetic-fixture'
 import type { ReportSource } from './data/report-source'
-import { accuracy, evidenceState, type ExperimentCase, type ExperimentReport } from './domain/report'
+import { accuracy, displayOutput, evidenceState, type ExperimentCase, type ExperimentReport } from './domain/report'
 
 type ViewState = 'loading' | 'ready' | 'empty' | 'error'
 type Filter = 'all' | 'improved' | 'regressed' | 'stable'
@@ -55,7 +55,7 @@ onMounted(() => { void load() })
       <div>
         <p class="eyebrow">Experimento de classificação · dataset sintético</p>
         <h1 id="page-title">Compare decisões.<br><em>Não invente confiança.</em></h1>
-        <p class="lede">Uma visão auditável da fixture <code>support-intents/v1</code>. Scores são calculados apenas dos cinco casos exibidos.</p>
+        <p class="lede">Uma visão auditável da fixture <code>support-intents/v1</code>. Resultados de {{ report?.cases.length ?? 0 }} casos sintéticos. Dados locais, sem execução de IA real.</p>
       </div>
       <div class="hero-actions">
         <button class="button secondary" type="button" @click="load()">Recarregar fixture</button>
@@ -121,7 +121,7 @@ onMounted(() => { void load() })
         <aside class="detail-panel" aria-live="polite">
           <template v-if="selected">
             <p class="eyebrow">DETALHE DO CASO</p><h2>{{ selected.id }}</h2><p class="input">“{{ selected.input.text }}”</p>
-            <dl><div><dt>Esperado</dt><dd><code>{{ selected.expected.label }}</code></dd></div><div><dt>Baseline</dt><dd><code>{{ selected.baseline.output.label }}</code> · {{ selected.baseline.passed ? 'passou' : 'falhou' }}</dd></div><div><dt>Candidato</dt><dd><code>{{ selected.candidate.output.label }}</code> · {{ selected.candidate.passed ? 'passou' : 'falhou' }}</dd></div></dl>
+            <dl><div><dt>Esperado</dt><dd><code>{{ selected.expected.label }}</code></dd></div><div><dt>Baseline</dt><dd><code>{{ displayOutput(selected.baseline.output) }}</code> · {{ selected.baseline.passed ? 'passou' : 'falhou' }}</dd></div><div><dt>Candidato</dt><dd><code>{{ displayOutput(selected.candidate.output) }}</code> · {{ selected.candidate.passed ? 'passou' : 'falhou' }}</dd></div></dl>
             <p class="detail-note">Evidência: <strong>{{ { improved: 'candidato corrigiu a decisão', regressed: 'candidato perdeu uma decisão', stable: 'sem mudança observada' }[evidenceState(selected)] }}</strong>.</p>
           </template>
           <template v-else><p class="eyebrow">DETALHE DO CASO</p><h2>Selecione uma evidência</h2><p>Use Tab e Enter ou clique numa linha para inspecionar esperado, obtido e estado.</p></template>
