@@ -2,7 +2,7 @@
 
 **Owner:** Maquiavel (integração full-stack, SINGLE_WRITER) · **Review:** Mefisto · **Track:** STANDARD
 **Branch:** `feat/lcp-mvp-end-to-end-demo` · **Base:** main consolidada com PRs #31, #35 e #34
-**Estado:** implementado localmente; revisão independente e decisão humana de merge pendentes. **Não** fazer merge automaticamente.
+**Estado:** implementado e revisado; decisão humana de merge pendente. **Não** fazer merge automaticamente.
 
 ## Objetivo concreto
 
@@ -50,6 +50,10 @@ Não alterar `backend/app/domain/**`, migrações/schema LCP-002, repositórios 
 - A execução local de `pytest` requer ambiente Python com dependências de desenvolvimento;
   o ambiente do agente bloqueou a instalação persistente delas. O CI permanece configurado
   para executar a suíte com PostgreSQL real, incluindo os novos testes HTTP.
+- Revisão independente Mefisto: a falha reproduzida de restart no CI foi corrigida ao
+  aguardar `docker compose up --wait` antes de Alembic/GET; o smoke corrigido passou.
+  Permanecem como restrições a suíte pytest local não executada e o comportamento explícito
+  `409` em uma rara corrida entre POSTs simultâneos.
 
 Limitações: os adaptadores e a ground truth são sintéticos e determinísticos; tokens,
 custo e duração são marcados como mock/zero. Nenhuma decisão de política de release é

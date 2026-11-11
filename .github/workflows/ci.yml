@@ -33,10 +33,10 @@ jobs:
           test "$(jq '.cases | length' report.json)" = 6
           test "$(jq '.summary.baseline.passed' report.json)" = 2
           docker compose restart api
+          docker compose up --wait
           docker compose exec -T api alembic upgrade head
           curl --fail --show-error http://127.0.0.1:8000/api/demo/experiments/demo-support-intents-v1 --output reloaded.json
           cmp report.json reloaded.json
-          docker compose up --wait
           curl --fail --show-error http://127.0.0.1:5173/ > /dev/null
       - if: always()
         run: docker compose down
