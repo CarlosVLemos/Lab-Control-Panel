@@ -2,7 +2,8 @@ name: CI
 on: [push, pull_request]
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 Chromium does not support the ubuntu-26.04 runner.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
