@@ -25,8 +25,17 @@ def test_demo_reuses_and_disposes_process_engine(postgres, monkeypatch):
         assert len(created) == 1
         engine = created[0]
         assert engine.pool.checkedout() == 0
+        disposed = []
+        original_dispose = engine.dispose
+
+        def dispose():
+            disposed.append(True)
+            original_dispose()
+
+        monkeypatch.setattr(engine, "dispose", dispose)
     assert demo._engine is None
     assert demo._session_factory is None
+    assert disposed == [True]
 
 
 def test_demo_post_get_is_idempotent_and_does_not_reexecute(postgres, monkeypatch):
