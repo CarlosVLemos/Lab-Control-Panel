@@ -2,7 +2,7 @@
 
 **Owner:** Maquiavel (integração full-stack, SINGLE_WRITER) · **Review:** Mefisto · **Track:** STANDARD
 **Branch:** `feat/lcp-mvp-end-to-end-demo` · **Base:** main consolidada com PRs #31, #35 e #34
-**Estado:** aguardando implementação Codex. **Não** fazer merge automaticamente.
+**Estado:** implementado localmente; revisão independente e decisão humana de merge pendentes. **Não** fazer merge automaticamente.
 
 ## Objetivo concreto
 
@@ -36,3 +36,21 @@ Não alterar `backend/app/domain/**`, migrações/schema LCP-002, repositórios 
 - Mefisto relata limitações (mock não é LLM real, não há release automático). PR sem merge.
 
 **Não abrir outra rodada abstrata de planejamento.** Implemente, teste e apresente problemas reproduzíveis se houver um bloqueio real.
+
+## Evidência de implementação (2026-11-11)
+
+- `POST /api/demo/experiments` executa o comparador determinístico uma vez e persiste
+  projeto, snapshots, experimento, doze runs e avaliações numa única transação. Repetir
+  a operação reutiliza o experimento sem recalcular ou sobrescrever o histórico.
+- `GET /api/demo/experiments/demo-support-intents-v1` reconstrói o DTO a partir dos
+  snapshots e saídas registradas nos runs; não chama a fixture/classificadores.
+- Checks observados: `npm test` (5 testes aprovados), `npm run build` (aprovado),
+  `docker compose config -q` (aprovado), e smoke Compose com `alembic upgrade head`,
+  POST/GET e restart da API (relatórios idênticos; 6 casos, baseline 2/6, candidato 6/6).
+- A execução local de `pytest` requer ambiente Python com dependências de desenvolvimento;
+  o ambiente do agente bloqueou a instalação persistente delas. O CI permanece configurado
+  para executar a suíte com PostgreSQL real, incluindo os novos testes HTTP.
+
+Limitações: os adaptadores e a ground truth são sintéticos e determinísticos; tokens,
+custo e duração são marcados como mock/zero. Nenhuma decisão de política de release é
+emitida ou inferida.

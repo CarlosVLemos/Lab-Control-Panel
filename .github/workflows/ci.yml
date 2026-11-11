@@ -29,10 +29,15 @@ jobs:
         run: |
           docker compose up --build --wait
           docker compose exec -T api alembic upgrade head
-          docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U lcp -d lcp -c "INSERT INTO projects (id, slug, name) VALUES ('compose-smoke', 'compose-smoke', 'Compose smoke test')"
-          docker compose down
+          curl --fail --show-error --request POST http://127.0.0.1:8000/api/demo/experiments --output report.json
+          test "$(jq '.cases | length' report.json)" = 6
+          test "$(jq '.summary.baseline.passed' report.json)" = 2
+          docker compose restart api
+          docker compose exec -T api alembic upgrade head
+          curl --fail --show-error http://127.0.0.1:8000/api/demo/experiments/demo-support-intents-v1 --output reloaded.json
+          cmp report.json reloaded.json
           docker compose up --wait
-          test "$(docker compose exec -T postgres psql -At -U lcp -d lcp -c "SELECT id FROM projects WHERE id = 'compose-smoke'")" = compose-smoke
+          curl --fail --show-error http://127.0.0.1:5173/ > /dev/null
       - if: always()
         run: docker compose down
   frontend:
