@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { fixtureSource } from './data/synthetic-fixture'
-import type { ReportSource } from './data/report-source'
+import { HttpReportSource, type ReportSource } from './data/report-source'
 import { accuracy, displayOutput, evidenceState, type ExperimentCase, type ExperimentReport } from './domain/report'
 
 type ViewState = 'loading' | 'ready' | 'empty' | 'error'
 type Filter = 'all' | 'improved' | 'regressed' | 'stable'
 
 const report = ref<ExperimentReport | null>(null)
-const state = ref<ViewState>('loading')
+const state = ref<ViewState>('empty')
 const selected = ref<ExperimentCase | null>(null)
 const filter = ref<Filter>('all')
 const errorMessage = ref('')
@@ -20,13 +20,22 @@ const filters: { value: Filter; label: string }[] = [
 const filteredCases = computed(() => report.value?.cases.filter((item) => filter.value === 'all' || evidenceState(item) === filter.value) ?? [])
 const delta = computed(() => report.value ? accuracy(report.value.summary.candidate.passed, report.value.summary.candidate.total) - accuracy(report.value.summary.baseline.passed, report.value.summary.baseline.total) : 0)
 
-async function load(source: ReportSource = fixtureSource) {
+const source: ReportSource = import.meta.env.VITE_DEMO_OFFLINE === 'true'
+  ? fixtureSource
+  : new HttpReportSource('/api/demo/experiments')
+const sourceLabel = import.meta.env.VITE_DEMO_OFFLINE === 'true' ? 'FIXTURE OFFLINE' : 'API PERSISTIDA'
+
+function demonstrateError() {
+  void executeFrom({ execute: async () => { throw new Error('Falha simulada da fonte de dados. Nenhum dado de fallback foi exibido.') } })
+}
+
+async function executeFrom(selectedSource: ReportSource) {
   state.value = 'loading'
   report.value = null
   selected.value = null
   errorMessage.value = ''
   try {
-    const next = await source.load()
+    const next = await selectedSource.execute()
     report.value = next
     state.value = next.cases.length === 0 ? 'empty' : 'ready'
   } catch (error) {
@@ -35,11 +44,7 @@ async function load(source: ReportSource = fixtureSource) {
   }
 }
 
-function demonstrateError() {
-  void load({ load: async () => { throw new Error('Falha simulada da fonte de dados. Nenhum dado de fallback foi exibido.') } })
-}
-
-onMounted(() => { void load() })
+function execute() { return executeFrom(source) }
 </script>
 
 <template>
@@ -55,10 +60,10 @@ onMounted(() => { void load() })
       <div>
         <p class="eyebrow">Experimento de classificação · dataset sintético</p>
         <h1 id="page-title">Compare decisões.<br><em>Não invente confiança.</em></h1>
-        <p class="lede">Uma visão auditável da fixture <code>support-intents/v1</code>. Resultados de {{ report?.cases.length ?? 0 }} casos sintéticos. Dados locais, sem execução de IA real.</p>
+        <p class="lede">Uma visão auditável do dataset <code>support-intents/v1</code>. Resultados persistidos de {{ report?.cases.length ?? 0 }} casos sintéticos; sem execução de IA real.</p>
       </div>
       <div class="hero-actions">
-        <button class="button secondary" type="button" @click="load()">Recarregar fixture</button>
+        <button class="button secondary" type="button" @click="execute">Executar comparação</button>
         <button class="button ghost" type="button" @click="demonstrateError">Ver estado de erro</button>
       </div>
     </section>
@@ -69,16 +74,16 @@ onMounted(() => { void load() })
 
     <section v-else-if="state === 'error'" class="state-card error" role="alert">
       <div><strong>Relatório indisponível</strong><p>{{ errorMessage }}</p><p>Nenhum resultado sintético é usado como fallback para ocultar a falha.</p></div>
-      <button class="button secondary" type="button" @click="load()">Tentar fixture</button>
+      <button class="button secondary" type="button" @click="execute">Tentar novamente</button>
     </section>
 
     <section v-else-if="state === 'empty'" class="state-card" role="status">
-      <div><strong>Nenhum caso disponível</strong><p>O relatório foi carregado, mas não contém casos para comparar.</p></div>
+      <div><strong>Nenhuma comparação executada</strong><p>Execute a comparação para carregar os resultados persistidos.</p></div>
     </section>
 
     <template v-else-if="report">
       <section class="metadata" aria-label="Metadados do relatório">
-        <span>EXPERIMENTO · {{ report.experimentId }}</span><span>DATASET · {{ report.dataset.id }}/{{ report.dataset.version }}</span><span>FONTE · FIXTURE LOCAL</span>
+        <span>EXPERIMENTO · {{ report.experimentId }}</span><span>DATASET · {{ report.dataset.id }}/{{ report.dataset.version }}</span><span>FONTE · {{ sourceLabel }}</span>
       </section>
 
       <section class="score-grid" aria-label="Comparação de acurácia">

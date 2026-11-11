@@ -17,4 +17,4 @@ export const syntheticReport: ExperimentReport = {
   ]
 }
 
-export const fixtureSource: ReportSource = { async load() { return syntheticReport } }
+export const fixtureSource: ReportSource = { async execute() { return syntheticReport } }

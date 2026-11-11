@@ -2,7 +2,8 @@ name: CI
 on: [push, pull_request]
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 Chromium does not support the ubuntu-26.04 runner.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -29,10 +30,33 @@ jobs:
         run: |
           docker compose up --build --wait
           docker compose exec -T api alembic upgrade head
-          docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U lcp -d lcp -c "INSERT INTO projects (id, slug, name) VALUES ('compose-smoke', 'compose-smoke', 'Compose smoke test')"
-          docker compose down
+          curl --fail --show-error --request POST http://127.0.0.1:8000/api/demo/experiments --output report.json
+          test "$(jq '.cases | length' report.json)" = 6
+          test "$(jq '.summary.baseline.passed' report.json)" = 2
+          docker compose restart api
           docker compose up --wait
-          test "$(docker compose exec -T postgres psql -At -U lcp -d lcp -c "SELECT id FROM projects WHERE id = 'compose-smoke'")" = compose-smoke
+          docker compose exec -T api alembic upgrade head
+          curl --fail --show-error http://127.0.0.1:8000/api/demo/experiments/demo-support-intents-v1 --output reloaded.json
+          cmp report.json reloaded.json
+          curl --fail --show-error http://127.0.0.1:5173/ > /dev/null
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Browser E2E (Playwright Chromium image)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false --ignore-scripts @playwright/test@1.56.1
+          # Browsers + OS libraries are preinstalled. Avoid apt on the Actions runner.
+          # Host networking reaches the Compose frontend bound to 127.0.0.1:5173.
+          docker run --rm --init --ipc=host --network host \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/frontend,target=/work" \
+            --workdir /work \
+            --env PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 \
+            mcr.microsoft.com/playwright:v1.56.1-noble \
+            ./node_modules/.bin/playwright test --config playwright.config.ts
       - if: always()
         run: docker compose down
   frontend:
