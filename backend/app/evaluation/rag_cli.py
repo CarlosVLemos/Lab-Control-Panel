@@ -6,7 +6,7 @@ from .rag import CASES, POLICIES, fingerprint
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--dry-run", action="store_true", default=True, help="offline only (default)")
     parser.add_argument("--top-k", type=int, default=3)
     args = parser.parse_args(argv)
     if args.top_k <= 0: parser.error("--top-k must be positive")
