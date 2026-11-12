@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import CodeEvaluationView from './components/CodeEvaluationView.vue'
 import { fixtureSource } from './data/synthetic-fixture'
 import { HttpReportSource, type ReportSource } from './data/report-source'
 import { accuracy, displayOutput, evidenceState, type ExperimentCase, type ExperimentReport } from './domain/report'
@@ -12,6 +13,7 @@ const state = ref<ViewState>('empty')
 const selected = ref<ExperimentCase | null>(null)
 const filter = ref<Filter>('all')
 const errorMessage = ref('')
+const activeView = ref<'response' | 'code'>('response')
 const filters: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' }, { value: 'improved', label: 'Melhorou' },
   { value: 'regressed', label: 'Regrediu' }, { value: 'stable', label: 'Estável' },
@@ -51,11 +53,13 @@ function execute() { return executeFrom(source) }
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#main-content" aria-label="Ir para a comparação">LCP<span>/</span> LAB</a>
+      <nav class="view-switcher" aria-label="Selecionar demonstração"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Response</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Code Evaluation</button></nav>
       <div class="badges" aria-label="Contexto da demonstração">
-        <span class="badge warning">DEMONSTRAÇÃO</span><span class="badge">DADOS SINTÉTICOS</span><span class="badge">MOCK</span>
+        <template v-if="activeView === 'response'"><span class="badge warning">DEMONSTRAÇÃO</span><span class="badge">DADOS SINTÉTICOS</span><span class="badge">MOCK</span></template><template v-else><span class="badge warning">EVIDÊNCIA VERSIONADA</span><span class="badge">SEM EXECUÇÃO</span></template>
       </div>
     </header>
 
+    <template v-if="activeView === 'response'">
     <section id="main-content" class="hero" aria-labelledby="page-title">
       <div>
         <p class="eyebrow">Experimento de classificação · dataset sintético</p>
@@ -135,5 +139,7 @@ function execute() { return executeFrom(source) }
     </template>
 
     <footer>LAB CONTROL PANEL · DEMONSTRAÇÃO COM DADOS SINTÉTICOS · custo, latência e tokens não foram capturados.</footer>
+    </template>
+    <CodeEvaluationView v-else />
   </main>
 </template>
