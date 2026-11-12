@@ -10,7 +10,7 @@ const title = computed(() => candidates.value[0]?.task_id ?? 'Avaliação de có
 </script>
 
 <template>
-  <section class="code-hero" aria-labelledby="code-evaluation-title">
+  <section id="main-content" class="code-hero" aria-labelledby="code-evaluation-title">
     <div>
       <p class="eyebrow">EVIDÊNCIA IMPORTADA · REAL EVALUATION V1A</p>
       <h1 id="code-evaluation-title">{{ title }}<br><em>sem veredito inventado.</em></h1>

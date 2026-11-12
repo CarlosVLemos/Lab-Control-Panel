@@ -43,3 +43,14 @@ test('exibe 503 sem substituir a falha por fixture sintética', async ({ page })
   await expect(page.locator('tbody tr')).toHaveCount(0)
   await expect(page.getByText('2 de 6 casos aprovados')).toHaveCount(0)
 })
+
+test('apresenta a evidência CODE-001 como comparável, sem declarar vencedor', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Code Evaluation' }).click()
+
+  await expect(page.getByText('COMPARÁVEL')).toBeVisible()
+  await expect(page.getByText('SEM VENCEDOR')).toBeVisible()
+  await expect(page.getByText('9/9', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('Não observadas')).toBeVisible()
+  await expect(page.getByText('Fixture versionada da saída do importador offline')).toBeVisible()
+})
