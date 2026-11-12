@@ -1,0 +1,41 @@
+{
+  "interpretation": "Imported JUnit results were not independently reexecuted. Line counts do not indicate code quality; no statistical superiority is claimed.",
+  "observed": [
+    {
+      "agent": "UNKNOWN-NOT-RECORDED",
+      "base_commit": "f3e02b9bfec66fa23c064078cbd4414acf9d2642",
+      "diff": { "added_lines": 57, "removed_lines": 27 },
+      "model": "UNKNOWN-NOT-RECORDED",
+      "provenance": "independent-local-evaluation; candidate=97cdd3ef6fcbb36c1945d58c2be64ffd2d952540; frozen-suite=2a4ae761d0ed92919c7452d08eba40a1d9f2b983849b20763e97a463edb33522; original-agent-and-model-not-recorded",
+      "repository": "CarlosVLemos/lcp-agent-benchmark",
+      "source_hashes": {
+        "diff_sha256": "5edc6ed5a549107081fd5c40fb1d8d1d2a3c15152c1a267ebd2b37cf46ef4744",
+        "junit_sha256": "8860c0a42a6c5d4d1d7503bbbba23338d8706a18c3b2bd2a3c4aced4b846b711",
+        "manifest_sha256": "44fc812f1ba19bbce0ffda8a510e6680cde3ed13fff6af2289789d94a456e2f5"
+      },
+      "strategy": "WITHOUT_SPEC",
+      "task_id": "CODE-001",
+      "tests": { "errors": 0, "failed": 0, "passed": 9, "skipped": 0, "total": 9 },
+      "usage": null
+    },
+    {
+      "agent": "UNKNOWN-NOT-RECORDED",
+      "base_commit": "f3e02b9bfec66fa23c064078cbd4414acf9d2642",
+      "diff": { "added_lines": 49, "removed_lines": 27 },
+      "model": "UNKNOWN-NOT-RECORDED",
+      "provenance": "independent-local-evaluation; candidate=369c9929deba6dd4cb8f8c75bb9411c6631fac8d; frozen-suite=2a4ae761d0ed92919c7452d08eba40a1d9f2b983849b20763e97a463edb33522; original-agent-and-model-not-recorded",
+      "repository": "CarlosVLemos/lcp-agent-benchmark",
+      "source_hashes": {
+        "diff_sha256": "f9b38cbd5c78c2cd308cb4cbfaa00559ff292285be9f32b8e2209b6b965dfa40",
+        "junit_sha256": "5ca4e574740217406645452ae3af09a4f2827bfdcb09b7e3f4a041d475e7556f",
+        "manifest_sha256": "78d782c699d7d3e5a58e08f59328e3e59402a2bb435585403326c572701b7980"
+      },
+      "strategy": "WITH_SPEC",
+      "task_id": "CODE-001",
+      "tests": { "errors": 0, "failed": 0, "passed": 9, "skipped": 0, "total": 9 },
+      "usage": null
+    }
+  ],
+  "reasons": [],
+  "status": "COMPARABLE"
+}
