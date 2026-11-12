@@ -4,14 +4,14 @@ Track: STANDARD. This foundation is offline-only: no HTTP endpoint, persistence,
 
 ## Frozen inputs
 
-- Corpus: six fictional marketplace policies in `app.evaluation.rag.POLICIES`.
-- Cases: 36 (`30` grounded and `6` adversarial/answerless) in `CASES`.
+- Corpus: 12 fictional marketplace policies in `app.evaluation.rag.POLICIES`, including versioned delivery rules and an embedded untrusted payment instruction used only for adversarial coverage.
+- Cases: 36: 18 factual, 6 multi-document synthesis, 6 missing-information abstentions, and 6 adversarial abstentions. Every synthesis case names at least two sources and two canonical facts.
 - Fingerprint: generated from ordered corpus/cases by SHA-256; reproduce with `PYTHONPATH=. python -m app.evaluation.rag_cli --dry-run`.
 - Conditions: cosine search in memory, configurable positive top-k, test-only fake embeddings.
 
 ## Acceptance
 
-Deterministic evaluation checks exact structured answer, expected source inclusion, and correct abstention. Telemetry fields are optional and default to `None`; they are not zero-filled or claimed as measurements.
+Deterministic evaluation checks structured `facts_match`, expected source inclusion, and correct abstention. It does not establish the semantic correctness of free-form generated text: that field is explicitly `NOT_EVALUATED` pending a separate semantic protocol. Telemetry fields are optional and default to `None`; they are not zero-filled or claimed as measurements.
 
 ## Commands and limitations
 
