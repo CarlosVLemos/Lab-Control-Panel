@@ -216,3 +216,97 @@ def test_partial_run_does_not_report_unknown_cost_as_zero(tmp_path):
     assert result["inconclusive"] is True
     assert result["total_estimated_usd"] is None
     assert result["generation_estimated_usd"] is None
+
+
+
+def test_sdk_request_is_same_envelope_reserved_before_send(monkeypatch):
+    """Verify actual SDK kwargs and preflight use the same request source."""
+    captured = []
+
+    class ResponsesFake:
+        def create(self, **kwargs):
+            captured.append(kwargs)
+            return types.SimpleNamespace(
+                status="completed", service_tier="default",
+                output_text=json.dumps({
+                    "answer": "Não há prova suficiente.",
+                    "abstained": True, "citations": [],
+                }),
+                model=remote.GEN_MODEL,
+                usage=types.SimpleNamespace(
+                    input_tokens=100, output_tokens=30, input_tokens_details=None,
+                ),
+            )
+
+    class SDKFake:
+        def __init__(self, **kwargs):
+            assert kwargs["max_retries"] == 0
+            self.responses = ResponsesFake()
+
+    monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=SDKFake))
+    adapter = remote.OpenAIAdapter("sk-test-sentinel")
+    question = "Qual o prazo?"
+    docs = [{"id": "shipping", "version": "v1", "text": "Cinco dias úteis."}]
+    envelope = remote.generation_request(question, docs)
+    g = guard()
+    g.authorize("generation", [json.dumps(envelope, ensure_ascii=False, sort_keys=True)])
+    answer = adapter.generate(question, docs)
+    assert captured == [envelope]
+    assert "shipping" in captured[0]["input"]
+    assert "expected_facts" not in str(captured)
+    assert answer["input_tokens"] == 100
+    assert g.generation_calls == 1
+
+
+def test_sdk_timeout_never_retries_and_never_raises_secret_text(monkeypatch):
+    sends = []
+
+    class ResponsesFake:
+        def create(self, **kwargs):
+            sends.append(kwargs)
+            raise TimeoutError("Bearer sk-test-sentinel")
+
+    class SDKFake:
+        def __init__(self, **kwargs):
+            assert kwargs["max_retries"] == 0
+            self.responses = ResponsesFake()
+
+    monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=SDKFake))
+    adapter = remote.OpenAIAdapter("sk-test-sentinel")
+    with pytest.raises(TimeoutError):
+        adapter.generate("Pergunta de teste", [])
+    assert len(sends) == 1
+    assert remote.error_code(TimeoutError("Bearer sk-test-sentinel")) == "TIMEOUT"
+
+
+def test_response_with_incompatible_tier_is_rejected(monkeypatch):
+    class ResponsesFake:
+        def create(self, **kwargs):
+            return types.SimpleNamespace(
+                status="completed", service_tier="priority",
+                output_text='{"answer":"a","abstained":false,"citations":[]}',
+                model=remote.GEN_MODEL,
+                usage=types.SimpleNamespace(input_tokens=1, output_tokens=1),
+            )
+
+    class SDKFake:
+        def __init__(self, **kwargs):
+            self.responses = ResponsesFake()
+
+    monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=SDKFake))
+    with pytest.raises(remote.Inconclusive, match="TIER_MISMATCH"):
+        remote.OpenAIAdapter("sk-test-sentinel").generate("Pergunta", [])
+
+
+def test_generation_bound_covers_outgoing_document_and_schema_envelope():
+    request = remote.generation_request(
+        "Qual o prazo?", [{"id": "shipping", "version": "v1", "text": "Cinco dias úteis."}]
+    )
+    wire_json = json.dumps(request, ensure_ascii=False, sort_keys=True)
+    g = guard()
+    g.authorize("generation", [wire_json])
+    assert g.generation_calls == 1
+    # The serialized schema and all labels are included in the reservation.
+    assert "rag_answer" in wire_json
+    assert "DOCUMENTO_NAO_CONFIAVEL" in wire_json
+    assert remote.token_upper_bound([wire_json], overhead=2048) <= remote.MAX_INPUT
