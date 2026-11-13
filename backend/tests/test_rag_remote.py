@@ -310,3 +310,16 @@ def test_generation_bound_covers_outgoing_document_and_schema_envelope():
     assert "rag_answer" in wire_json
     assert "DOCUMENTO_NAO_CONFIAVEL" in wire_json
     assert remote.token_upper_bound([wire_json], overhead=2048) <= remote.MAX_INPUT
+
+
+
+def test_retrieval_recall_is_distinct_and_not_scored_for_missing_cases():
+    fake = FakeProvider()
+    rows = remote.run_pilot(fake, fake, guard())
+    assert len(rows) == 12
+    for row in rows:
+        if row["arm"] == "NO_CONTEXT" or row["case_id"] in ("rag-27", "rag-32"):
+            assert row["retrieval_recall_at_3"] is None
+        else:
+            assert 0.0 <= row["retrieval_recall_at_3"] <= 1.0
+        assert row["semantic_correctness"] == "NOT_EVALUATED"
