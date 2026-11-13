@@ -207,3 +207,12 @@ def test_export_rejects_nested_secret_and_invalid_error_code(tmp_path):
         remote.save_report([{"retrieved_docs": [{"id": "sk-test-sentinel"}]}], tmp_path)
     with pytest.raises(remote.Blocked, match="EXPORT_ERROR_CODE"):
         remote.save_report([{"error_code": "secret provider exception"}], tmp_path)
+
+def test_partial_run_does_not_report_unknown_cost_as_zero(tmp_path):
+    fake = FakeProvider(fail_at=1)
+    rows = remote.run_pilot(fake, fake, guard())
+    remote.save_report(rows, tmp_path)
+    result = json.loads((tmp_path / "rag-001-summary.json").read_text())
+    assert result["inconclusive"] is True
+    assert result["total_estimated_usd"] is None
+    assert result["generation_estimated_usd"] is None
