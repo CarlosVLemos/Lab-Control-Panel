@@ -289,6 +289,7 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
                 ),
                 "query_embedding_tokens": None,
                 "query_embedding_cost_estimated_usd": None,
+                "retrieval_recall_at_3": None,
             }
             try:
                 if arm == "SEMANTIC_RAG":
@@ -302,6 +303,12 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
                         estimated_usd(embedding_tokens, 0, embedding=True)
                     )
                     context = context_for(case.question, docs, vectors, query_vector[0])
+                    expected = set(case.expected_sources)
+                    if expected and case.expected_answer is not None:
+                        recovered = {document["id"] for document in context}
+                        record["retrieval_recall_at_3"] = (
+                            len(expected & recovered) / len(expected)
+                        )
                 # Only question/context, no expected_answer/facts/sources.
                 # Bound the complete serialized request, including instructions,
                 # document labels, structured-output schema and framing.
@@ -349,6 +356,7 @@ EXPORT_FIELDS = frozenset({
     "review_score", "semantic_correctness", "price_date",
     "index_embedding_tokens", "index_embedding_cost_estimated_usd",
     "query_embedding_tokens", "query_embedding_cost_estimated_usd",
+    "retrieval_recall_at_3",
 })
 
 
