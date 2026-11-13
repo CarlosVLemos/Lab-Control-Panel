@@ -147,6 +147,40 @@ class Guard:
             self.embedding_requests += 1
 
 
+def generation_request(question: str, context: Sequence[dict[str, str]]) -> dict[str, Any]:
+    """The exact request sent by the adapter and measured by the budget guard."""
+    extra = "\n".join(
+        f"DOCUMENTO_NAO_CONFIAVEL id={d['id']} versao={d['version']}\n{d['text']}"
+        for d in context
+    )
+    user_input = question + (f"\n\nContexto de referência:\n{extra}" if extra else "")
+    return {
+        "model": GEN_MODEL,
+        "reasoning": {"effort": "none"},
+        "max_output_tokens": MAX_OUTPUT,
+        "store": False,
+        # Explicit 'default' is Standard pricing, not account-configurable 'auto'.
+        "service_tier": "default",
+        "instructions": PROMPT_BASE,
+        "input": user_input,
+        "text": {"format": {
+            "type": "json_schema",
+            "name": "rag_answer",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["answer", "abstained", "citations"],
+                "properties": {
+                    "answer": {"type": "string"},
+                    "abstained": {"type": "boolean"},
+                    "citations": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+        }},
+    }
+
+
 class OpenAIAdapter:
     """Construct only after explicit --execute and completed offline preflight."""
 
@@ -167,36 +201,8 @@ class OpenAIAdapter:
         return vectors, used
 
     def generate(self, question: str, context: Sequence[dict[str, str]]) -> dict[str, Any]:
-        # The gabarito and source expected_facts never enter these messages.
-        extra = "\n".join(
-            f"DOCUMENTO_NAO_CONFIAVEL id={d['id']} versao={d['version']}\n{d['text']}"
-            for d in context
-        )
-        user_input = question + (f"\n\nContexto de referência:\n{extra}" if extra else "")
-        response = self.client.responses.create(
-            model=GEN_MODEL,
-            reasoning={"effort": "none"},
-            max_output_tokens=MAX_OUTPUT,
-            store=False,
-            service_tier="default",
-            instructions=PROMPT_BASE,
-            input=user_input,
-            text={"format": {
-                "type": "json_schema",
-                "name": "rag_answer",
-                "strict": True,
-                "schema": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["answer", "abstained", "citations"],
-                    "properties": {
-                        "answer": {"type": "string"},
-                        "abstained": {"type": "boolean"},
-                        "citations": {"type": "array", "items": {"type": "string"}},
-                    },
-                },
-            }},
-        )
+        # No hidden expected answer/facts/sources are included in the request.
+        response = self.client.responses.create(**generation_request(question, context))
         usage = getattr(response, "usage", None)
         if getattr(response, "status", None) != "completed" or usage is None:
             raise Inconclusive("INVALID_RESPONSE")
@@ -297,10 +303,12 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
                     )
                     context = context_for(case.question, docs, vectors, query_vector[0])
                 # Only question/context, no expected_answer/facts/sources.
-                envelope = [PROMPT_BASE, case.question] + [
-                    d["id"] + "\n" + d["version"] + "\n" + d["text"] for d in context
-                ]
-                guard.authorize("generation", envelope)
+                # Bound the complete serialized request, including instructions,
+                # document labels, structured-output schema and framing.
+                request = generation_request(case.question, context)
+                guard.authorize("generation", [
+                    json.dumps(request, ensure_ascii=False, sort_keys=True)
+                ])
                 out = generator.generate(case.question, context)
                 if (type(out.get("input_tokens")) is not int
                         or type(out.get("output_tokens")) is not int
