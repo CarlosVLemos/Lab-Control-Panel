@@ -323,3 +323,198 @@ def test_retrieval_recall_is_distinct_and_not_scored_for_missing_cases():
         else:
             assert 0.0 <= row["retrieval_recall_at_3"] <= 1.0
         assert row["semantic_correctness"] == "NOT_EVALUATED"
+
+
+
+def valid_pricing_dict():
+    return {
+        "schema": remote.PRICING_SCHEMA,
+        "generation_model": remote.GEN_MODEL,
+        "embedding_model": remote.EMBED_MODEL,
+        "service_tier": "standard",
+        "region": "global",
+        "account_region_confirmed": True,
+        "regional_surcharge_applies": False,
+        "model_access_confirmed": True,
+        "currency": "USD",
+        "unit": "per_million_tokens",
+        "generation_price_url": remote.PRICE_REFERENCE,
+        "embedding_price_url": remote.EMBED_PRICE_REFERENCE,
+        "multiplier": "1",
+        "additional_fees_confirmed": "none",
+        "verified_at_utc": "2026-11-13T13:00:00Z",
+        "prices_usd_per_million": {
+            "generation_input": "0.10",
+            "generation_cache_read": "0.01",
+            "generation_cache_write": "0.125",
+            "generation_output": "0.50",
+            "embedding_input": "0.02",
+        },
+    }
+
+
+def pricing_file(tmp_path, obj):
+    from pathlib import Path
+    path = (tmp_path / "pricing.json").resolve()
+    path.write_text(json.dumps(obj), encoding="utf-8")
+    return path
+
+
+def pricing_clock():
+    from datetime import datetime, timezone
+    return datetime(2026, 11, 13, 13, 30, tzinfo=timezone.utc)
+
+
+def test_valid_operator_snapshot_loaded_and_worst_case_reservation(tmp_path):
+    snapshot = remote.load_pricing_snapshot(
+        pricing_file(tmp_path, valid_pricing_dict()), now=pricing_clock())
+    g = remote.Guard(Decimal("2"), 12, 7, pricing=snapshot)
+    g.authorize("generation", ["pergunta"])
+    assert g.reserved == remote.estimated_usd(
+        remote.token_upper_bound(["pergunta"], overhead=2048), 1024,
+        prices=snapshot.prices,
+    )
+    assert snapshot.region == "global"
+    assert snapshot.service_tier == "standard"
+
+
+@pytest.mark.parametrize("mutator", [
+    lambda p: p.pop("region"),
+    lambda p: p.update({"region": "us-east-1"}),
+    lambda p: p.update({"region": "regional"}),
+    lambda p: p.update({"regional_surcharge_applies": True}),
+    lambda p: p.update({"account_region_confirmed": False}),
+    lambda p: p.update({"service_tier": "priority"}),
+    lambda p: p.update({"model_access_confirmed": False}),
+    lambda p: p.update({"verified_at_utc": "2026-11-10T13:00:00Z"}),
+    lambda p: p.update({"verified_at_utc": "2030-01-01T00:00:00Z"}),
+    lambda p: p.update({"generation_price_url": "https://example.com"}),
+    lambda p: p.update({"multiplier": "2"}),
+    lambda p: p.update({"additional_fees_confirmed": "unknown"}),
+    lambda p: p["prices_usd_per_million"].pop("embedding_input"),
+    lambda p: p["prices_usd_per_million"].update({"generation_output": "NaN"}),
+    lambda p: p["prices_usd_per_million"].update({"generation_input": "0.001"}),
+])
+def test_pricing_bad_or_stale_snapshot_blocks_pre_client(tmp_path, mutator):
+    p = valid_pricing_dict()
+    mutator(p)
+    with pytest.raises(remote.Blocked, match="PRICING_UNVERIFIED"):
+        remote.load_pricing_snapshot(pricing_file(tmp_path, p), now=pricing_clock())
+
+
+def test_execute_blocks_missing_pricing_before_credential_read(monkeypatch, capsys):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-sentinel")
+    monkeypatch.setattr(remote, "OpenAIAdapter", lambda *_: pytest.fail("client created"))
+    assert remote.main([
+        "--execute", "--max-usd", "2", "--max-generation-calls", "12",
+        "--max-embedding-requests", "7",
+    ]) == 2
+    assert "sk-test-sentinel" not in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("input_bytes", [8191, 8192, 8193, 271999, 272000, 272001])
+def test_token_boundary_before_transport(input_bytes):
+    g = guard()
+    text = "x" * input_bytes
+    physical = []
+    try:
+        g.authorize("generation", [text])
+        physical.append(1)
+    except remote.Blocked as exc:
+        assert str(exc) == "TOKEN_BOUND"
+    assert not physical
+    assert g.generation_calls == 0
+
+
+@pytest.mark.parametrize("kind", ["generation", "embedding"])
+def test_tier_region_or_multiplier_unverified_never_sends(tmp_path, kind):
+    cases = [
+        {"region": "regional"},
+        {"regional_surcharge_applies": True},
+        {"service_tier": "priority"},
+        {"multiplier": "2"},
+    ]
+    for delta in cases:
+        snapshot = valid_pricing_dict()
+        snapshot.update(delta)
+        try:
+            attestation = remote.load_pricing_snapshot(
+                pricing_file(tmp_path, snapshot), now=pricing_clock())
+        except remote.Blocked:
+            continue
+        pytest.fail("unapproved pricing configuration accepted")
+
+
+def test_full_export_contains_config_timestamp_and_unreviewed_rubric(tmp_path):
+    fake = FakeProvider()
+    records = remote.run_pilot(fake, fake, guard())
+    remote.save_report(records, tmp_path)
+    first = json.loads((tmp_path / "rag-001-results.jsonl").read_text().splitlines()[0])
+    assert first["timestamp_utc"]
+    assert first["service_tier"] == "default"
+    assert first["reasoning_effort"] == "none"
+    assert first["max_output_tokens"] == 1024
+    for key in (
+        "review_abstention_appropriate", "review_justified_negative",
+        "review_safe_refusal", "review_error", "reviewed_at_utc"
+    ):
+        assert key in first and first[key] is None
+
+
+@pytest.mark.parametrize("status,error", [
+    ("incomplete", remote.Inconclusive),
+    ("failed", remote.Inconclusive),
+    ("completed", remote.Inconclusive),
+])
+def test_generation_sdk_incomplete_or_usage_absent(monkeypatch, status, error):
+    class ResponsesFake:
+        def create(self, **kwargs):
+            usage = None if status == "completed" else types.SimpleNamespace(
+                input_tokens=1, output_tokens=1)
+            return types.SimpleNamespace(
+                status=status, usage=usage, service_tier="default",
+                output_text='{"answer":"x","abstained":false,"citations":[]}',
+                model=remote.GEN_MODEL
+            )
+    class SDKFake:
+        def __init__(self, **kwargs):
+            self.responses = ResponsesFake()
+    monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=SDKFake))
+    with pytest.raises(error):
+        remote.OpenAIAdapter("sk-test-sentinel").generate("Pergunta", [])
+
+
+@pytest.mark.parametrize("http_status", [408, 409, 429, 500, 502, 503])
+def test_provider_http_failure_is_single_attempt_without_retry(monkeypatch, http_status):
+    physical = []
+    class ResponsesFake:
+        def create(self, **kwargs):
+            physical.append(http_status)
+            raise RuntimeError(f"HTTP {http_status} sk-test-sentinel")
+    class SDKFake:
+        def __init__(self, **kwargs):
+            assert kwargs["max_retries"] == 0
+            self.responses = ResponsesFake()
+    monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(OpenAI=SDKFake))
+    try:
+        remote.OpenAIAdapter("sk-test-sentinel").generate("Pergunta", [])
+    except RuntimeError as exc:
+        assert remote.error_code(exc) == "PROVIDER_UNAVAILABLE"
+    else:
+        pytest.fail("expected provider exception")
+    assert physical == [http_status]
+
+
+def test_embedding_failure_consumes_one_reserved_attempt_and_stops(tmp_path):
+    class BrokenEmbedding(FakeProvider):
+        def embed(self, texts):
+            self.embeddings.append(list(texts))
+            raise TimeoutError("Bearer sk-test-sentinel")
+    fake = BrokenEmbedding()
+    limit = guard()
+    rows = remote.run_pilot(fake, fake, limit)
+    assert len(fake.embeddings) == 1
+    assert limit.embedding_requests == 1
+    assert rows[0]["status"] == "INCONCLUSIVE"
+    remote.save_report(rows, tmp_path)
+    assert "sk-test-sentinel" not in "".join(p.read_text() for p in tmp_path.iterdir())
