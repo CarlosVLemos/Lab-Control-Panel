@@ -252,7 +252,7 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
     try:
         guard.authorize("embedding", [d.text for d in docs])
         vectors, used = embedder.embed([d.text for d in docs])
-        if used is None or len(vectors) != len(docs):
+        if not isinstance(used, int) or used < 0 or len(vectors) != len(docs):
             raise Inconclusive("INVALID_RESPONSE")
         if any(not v or len(v) != len(vectors[0]) or any(not math.isfinite(x) for x in v) for v in vectors):
             raise Inconclusive("INVALID_RESPONSE")
@@ -277,13 +277,24 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
                 "cost_estimated_usd": None, "latency_ms": None, "error_code": None,
                 "review_score": None, "semantic_correctness": "NOT_EVALUATED",
                 "price_date": PRICE_DATE,
+                "index_embedding_tokens": used if not records else None,
+                "index_embedding_cost_estimated_usd": (
+                    str(estimated_usd(used, 0, embedding=True)) if not records else None
+                ),
+                "query_embedding_tokens": None,
+                "query_embedding_cost_estimated_usd": None,
             }
             try:
                 if arm == "SEMANTIC_RAG":
                     guard.authorize("embedding", [case.question])
                     query_vector, embedding_tokens = embedder.embed([case.question])
-                    if embedding_tokens is None or len(query_vector) != 1:
+                    if (not isinstance(embedding_tokens, int) or embedding_tokens < 0
+                            or len(query_vector) != 1):
                         raise Inconclusive("INVALID_RESPONSE")
+                    record["query_embedding_tokens"] = embedding_tokens
+                    record["query_embedding_cost_estimated_usd"] = str(
+                        estimated_usd(embedding_tokens, 0, embedding=True)
+                    )
                     context = context_for(case.question, docs, vectors, query_vector[0])
                 # Only question/context, no expected_answer/facts/sources.
                 envelope = [PROMPT_BASE, case.question] + [
@@ -291,8 +302,11 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
                 ]
                 guard.authorize("generation", envelope)
                 out = generator.generate(case.question, context)
-                if (out.get("input_tokens") is None or out.get("output_tokens") is None
-                        or out.get("model") not in (None, GEN_MODEL)):
+                if (type(out.get("input_tokens")) is not int
+                        or type(out.get("output_tokens")) is not int
+                        or out["input_tokens"] < 0 or out["output_tokens"] < 0
+                        or out["input_tokens"] > MAX_INPUT or out["output_tokens"] > MAX_OUTPUT
+                        or out.get("model") != GEN_MODEL):
                     raise Inconclusive("INVALID_RESPONSE")
                 record.update({
                     "status": "COMPLETED",
@@ -326,11 +340,23 @@ def save_report(records: Sequence[dict[str, Any]], output_dir: Path) -> None:
                    encoding="utf-8")
     completed = sum(row.get("status") == "COMPLETED" for row in records)
     total = len(records)
+    def sum_cost(field: str) -> str:
+        return str(sum((Decimal(row[field]) for row in records if row.get(field) is not None), Decimal("0")))
+
     summary = {
         "schema": SCHEMA_VERSION, "completed": completed, "attempts": total,
         "inconclusive": total != 12 or completed != total, "winner": None,
+        "generation_estimated_usd": sum_cost("cost_estimated_usd"),
+        "index_embedding_estimated_usd": sum_cost("index_embedding_cost_estimated_usd"),
+        "query_embedding_estimated_usd": sum_cost("query_embedding_cost_estimated_usd"),
         "warning": "Pilot only: no statistical superiority; human review pending.",
     }
+    summary["total_estimated_usd"] = str(sum(
+        (Decimal(summary[k]) for k in (
+            "generation_estimated_usd", "index_embedding_estimated_usd",
+            "query_embedding_estimated_usd"
+        )), Decimal("0")
+    ))
     (output_dir / "rag-001-summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
