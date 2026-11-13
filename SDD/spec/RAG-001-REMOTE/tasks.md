@@ -1,6 +1,6 @@
 # RAG-001-REMOTE — tarefas de implementação do MVP
 
-**Track:** CRITICAL por credenciais/limite financeiro. **Modo:** SINGLE_WRITER. **Contrato:** DRAFT — nenhuma implementação remota autorizada antes de FROZEN humano.
+**Track:** CRITICAL por credenciais/limite financeiro. **Modo:** SINGLE_WRITER. **Contrato:** FROZEN MVP v2 — implementação Python offline autorizada em branch separada; chamadas pagas e merge não autorizados.
 
 | Fase | Entrega | Evidência / gate |
 | --- | --- | --- |
