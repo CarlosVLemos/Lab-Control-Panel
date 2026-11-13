@@ -14,6 +14,7 @@
 | T8 RESULTADO | Provider fake retorna sucesso, saída inválida, recusa, informação parcial, usage ausente | JSONL/relatório distinguem `null` de 0; não declaram vencedor; não descartam falhas |
 | T9 RUBRICA | Avaliação humana de 0/1/2 e classificação de abstenção, negativa e recusa; casos sem citação | Correção factual não depende de citar, revisão humana marcada separadamente |
 | T10 CI | Suíte completa + prova de CLI sem credencial | CI verde, sem segredo nem chamadas pagas |
+| T11 COTA DE CHAMADAS | Contador fake de envios físicos: executar 12 gerações autorizadas e tentar a 13ª; executar N requisições de embeddings (indexação + consultas) e tentar a N+1ª, incluindo falhas/timeout na contagem | 13ª geração e N+1º embedding são bloqueados **antes do transporte** (0 envio adicional), sem retry, sem saldo negativo ou contador reiniciado |
 
 **Comandos após implementação:** `cd backend && python -m pytest -q tests/test_rag_remote.py tests/test_rag.py` e testes normais da CI. Usar transporte fake para o SDK sem fazer chamada paga. PR de contrato é **somente documentação**, logo runtime continua NOT_RUN.
 
