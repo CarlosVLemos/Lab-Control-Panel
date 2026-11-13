@@ -1,6 +1,6 @@
 # RAG-001-REMOTE — MVP de avaliação real
 
-**Estado:** DRAFT (não FROZEN) · **Issue:** #45 · **Experimento:** #43 · **PR de contrato:** #46 · **Track:** CRITICAL pelo uso de credenciais e gastos, não pela complexidade do produto.
+**Estado:** FROZEN MVP v2 (aprovado em 2026-11-13) · **Issue:** #45 · **Experimento:** #43 · **PR de contrato:** #46 · **Track:** CRITICAL pelo uso de credenciais e gastos, não pela complexidade do produto.
 
 ## Intenção de produto
 
