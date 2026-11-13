@@ -12,7 +12,7 @@
 
 ## Verification
 
-- GitHub Actions [PR CI](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43431198099), head initially `12cf759ea1174b2fa642933afc6a70f6bd048f0d`: backend `cd backend && python -m pytest -q` completed **success** as observed on the GitHub job step. Frontend tests and build completed success. **Whole workflow:** check final workflow result before reporting success (Compose restart/Playwright may still run).
+- GitHub Actions [PR CI](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43431198099), head initially `12cf759ea1174b2fa642933afc6a70f6bd048f0d`: backend `cd backend && python -m pytest -q` completed **success** as observed on the GitHub job step. Frontend tests and build completed success. The [completed PR run](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43433696018) and [push run](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43433689854) for head `8c453dd202265767179325ecc3b2481d235dc6bd` both ended `completed/success`, including backend pytest, Compose restart, Playwright E2E, frontend tests and build. **Newer changes require their own CI result**, so this evidence is not transferable to later commits.
 - Included tests: `backend/tests/test_rag_remote.py` verify manifest hash, dry-run zero-network constructor, six pairs, index/query counts, 12+1 and N+1 quota saturation, token/budget blocking, secret sentinel in error output, no retries configured at SDK constructor, null telemetry and reports.
 - Actual OpenAI generation, embeddings and account model availability: **NOT_RUN**. No API key accessed, no paid requests authorized. Real transport retry behavior needs independent review and transport-level mocked tests if future review identifies a gap.
 
@@ -32,3 +32,10 @@ Do **not** run `--execute` before separately approving the actual pilot's model 
 - Local budget is a conservative preflight estimate, not a global billing ceiling.
 - Outputs only include fictional dataset and visible answers after filtering; verify the artifacts manually before publishing to GitHub.
 - Review semantics: `rag-32` allows a safe refusal or justified negative, not only a blank answer.
+
+## Narrow follow-up: live-request envelope and retrieval evidence
+
+- Budget guard now estimates tokens from the **same** serialized Responses API request object the SDK receives, including system instructions, JSON schema, document IDs/versions/text and framing. This removes an inconsistency between prompt size reservation and actual payload. The byte upper-bound with fixed overhead is conservative for this short fictional dataset; general-purpose token counting and other tokenizer families remain out of scope.
+- Mocked SDK response/timeout/tier tests assert a single physical call, `max_retries=0`, and same request envelope. They do **not** prove compatibility with the remote provider. No live API was used.
+- Each `SEMANTIC_RAG` record now reports `retrieval_recall_at_3` for answerable cases with expected sources. For missing/adversarial and all `NO_CONTEXT` cases it is `null`. This measures retrieval, not semantic answer correctness.
+- The live pilot remains **blocked** without independent runtime review, verified model access, current price/region/tier and explicit financial approval. In particular the snapshot `PRICE_DATE=2026-11-13` is not an evergreen rate guarantee.
