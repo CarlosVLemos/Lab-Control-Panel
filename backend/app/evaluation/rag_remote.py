@@ -15,7 +15,7 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Protocol, Sequence
 
@@ -130,7 +130,7 @@ def load_pricing_snapshot(path: Path, *, now: datetime | None = None) -> Pricing
             sha256=canonical_sha(obj), region="global", service_tier="standard",
             model_access_confirmed=True,
         )
-    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, InvalidOperation) as exc:
         raise Blocked("PRICING_UNVERIFIED") from exc
 
 
