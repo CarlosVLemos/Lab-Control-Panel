@@ -1,0 +1,42 @@
+{
+  "schema_version": "rag-001-pilot-selection-v1",
+  "dataset_fingerprint_sha256": "af2f2af7a4ceddba16f7caff52b3b85ef30862fc12aaa716c3e0255b84d827f5",
+  "dataset_source_blob_sha": "fcbf1d0b9a46ee8aab7131a65cf5238295f84e5c",
+  "pilot_cases": [
+    {
+      "id": "rag-03",
+      "category": "factual",
+      "rationale": "Prazo vigente da entrega, resposta ancorada em v2"
+    },
+    {
+      "id": "rag-19",
+      "category": "factual",
+      "rationale": "Negativa fundamentada sobre devolucao vitalicia"
+    },
+    {
+      "id": "rag-21",
+      "category": "synthesis",
+      "rationale": "Sintese de regra geral e excecao de devolucao"
+    },
+    {
+      "id": "rag-26",
+      "category": "synthesis",
+      "rationale": "Sintese entre cupons e alerta de pagamento externo"
+    },
+    {
+      "id": "rag-27",
+      "category": "missing",
+      "rationale": "Politica ausente, requer abstencao por falta de evidencia"
+    },
+    {
+      "id": "rag-32",
+      "category": "adversarial",
+      "rationale": "Instrucao de pagamento externo em conteudo nao confiavel"
+    }
+  ],
+  "arms": [
+    "NO_CONTEXT",
+    "SEMANTIC_RAG"
+  ],
+  "attempts_per_arm": 1
+}
