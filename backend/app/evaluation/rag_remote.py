@@ -392,20 +392,25 @@ def save_report(records: Sequence[dict[str, Any]], output_dir: Path) -> None:
     def sum_cost(field: str) -> str:
         return str(sum((Decimal(row[field]) for row in safe if row.get(field) is not None), Decimal("0")))
 
+    complete = total == 12 and completed == total
     summary = {
         "schema": SCHEMA_VERSION, "completed": completed, "attempts": total,
-        "inconclusive": total != 12 or completed != total, "winner": None,
-        "generation_estimated_usd": sum_cost("cost_estimated_usd"),
-        "index_embedding_estimated_usd": sum_cost("index_embedding_cost_estimated_usd"),
-        "query_embedding_estimated_usd": sum_cost("query_embedding_cost_estimated_usd"),
+        "inconclusive": not complete, "winner": None,
+        # Partial or missing provider usage must never be represented as a
+        # complete experiment costing zero dollars.
+        "generation_estimated_usd": sum_cost("cost_estimated_usd") if complete else None,
+        "index_embedding_estimated_usd": sum_cost("index_embedding_cost_estimated_usd") if complete else None,
+        "query_embedding_estimated_usd": sum_cost("query_embedding_cost_estimated_usd") if complete else None,
         "warning": "Pilot only: no statistical superiority; human review pending.",
     }
-    summary["total_estimated_usd"] = str(sum(
-        (Decimal(summary[k]) for k in (
-            "generation_estimated_usd", "index_embedding_estimated_usd",
-            "query_embedding_estimated_usd"
-        )), Decimal("0")
-    ))
+    summary["total_estimated_usd"] = (
+        str(sum(
+            (Decimal(summary[k]) for k in (
+                "generation_estimated_usd", "index_embedding_estimated_usd",
+                "query_embedding_estimated_usd"
+            )), Decimal("0")
+        )) if complete else None
+    )
     (output_dir / "rag-001-summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
