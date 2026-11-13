@@ -393,6 +393,7 @@ def test_valid_operator_snapshot_loaded_and_worst_case_reservation(tmp_path):
     lambda p: p.update({"additional_fees_confirmed": "unknown"}),
     lambda p: p["prices_usd_per_million"].pop("embedding_input"),
     lambda p: p["prices_usd_per_million"].update({"generation_output": "NaN"}),
+    lambda p: p["prices_usd_per_million"].update({"generation_output": "not-a-decimal"}),
     lambda p: p["prices_usd_per_million"].update({"generation_input": "0.001"}),
 ])
 def test_pricing_bad_or_stale_snapshot_blocks_pre_client(tmp_path, mutator):
