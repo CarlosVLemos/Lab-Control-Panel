@@ -39,3 +39,46 @@ Do **not** run `--execute` before separately approving the actual pilot's model 
 - Mocked SDK response/timeout/tier tests assert a single physical call, `max_retries=0`, and same request envelope. They do **not** prove compatibility with the remote provider. No live API was used.
 - Each `SEMANTIC_RAG` record now reports `retrieval_recall_at_3` for answerable cases with expected sources. For missing/adversarial and all `NO_CONTEXT` cases it is `null`. This measures retrieval, not semantic answer correctness.
 - The live pilot remains **blocked** without independent runtime review, verified model access, current price/region/tier and explicit financial approval. In particular the snapshot `PRICE_DATE=2026-11-13` is not an evergreen rate guarantee.
+
+## Pricing attestation for the paid-mode gate (no network required to validate)
+
+The CLI **requires** `--pricing-snapshot /absolute/path/to/pricing.json` on `--execute`. The file is intentionally local and **outside the repository**. It must be manually created/checked by the operator against the current official generation and embedding prices and the **account/endpoint region configuration**. The file itself is an operator attestation, **not cryptographic proof of the provider's future invoice**.
+
+Example of the expected shape — **deliberately unusable as-is** (outdated timestamp, unconfirmed account and placeholder tariffs):
+
+```json
+{
+  "schema": "rag-001-pricing-v1",
+  "generation_model": "gpt-6-luna",
+  "embedding_model": "text-embedding-3-small",
+  "service_tier": "standard",
+  "region": "global",
+  "account_region_confirmed": false,
+  "regional_surcharge_applies": false,
+  "model_access_confirmed": false,
+  "currency": "USD",
+  "unit": "per_million_tokens",
+  "generation_price_url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+  "embedding_price_url": "https://developers.openai.com/api/docs/models/text-embedding-3-small",
+  "multiplier": "1",
+  "additional_fees_confirmed": "none",
+  "verified_at_utc": "2000-01-01T00:00:00Z",
+  "prices_usd_per_million": {
+    "generation_input": "0.10",
+    "generation_cache_read": "0.01",
+    "generation_cache_write": "0.125",
+    "generation_output": "0.50",
+    "embedding_input": "0.02"
+  }
+}
+```
+
+Snapshot must be **absolute-path, not a symlink, outside the repo, UTC, verified within 24h, Standard/global with no regional surcharge, all rates present and not below 2026-11-13 baseline**. Unsupported or unverifiable conditions block before API-key read/SDK construction; no regional/priority mode is available in MVP. `OPENAI_BASE_URL` custom endpoints are rejected to avoid an unaccounted routing policy.
+
+**Do not execute the pilot without separate budget approval**, even if a syntactically valid snapshot exists. Use `python -m app.evaluation.rag_remote` to verify the default offline mode safely.
+
+### Runtime review follow-up
+
+- Independent reviewer Mefisto flagged `failed` at SHA `c4348570...` for price/region gating and two MEDIUM test/evidence gaps ([review](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/47#issuecomment-6855024886)).
+- Follow-up introduces pricing attestation gate, schema fields for per-attempt UTC timestamp, effective configuration, human rubric classifications, and fakes for HTTP failure classes and absent/incomplete usage.
+- **These edits are not an independent approval**. Re-review the actual updated head and CI. Never claim remote price, model entitlement or paid results verified from offline fixtures.
