@@ -173,3 +173,37 @@ def test_cli_execute_requires_explicit_limits_even_with_env(monkeypatch, capsys)
                         lambda *_: pytest.fail("client must not be built"))
     assert remote.main(["--execute", "--max-usd", "2"]) == 2
     assert "sk-test-sentinel" not in capsys.readouterr().err
+
+def test_export_drops_unknown_provider_data_and_headers(tmp_path):
+    row = {
+        "schema": remote.SCHEMA_VERSION,
+        "status": "INCONCLUSIVE",
+        "error_code": "UNKNOWN",
+        "answer": None,
+        "private_headers": {"authorization": "Bearer sk-test-sentinel"},
+        "sdk_exception": "sk-test-sentinel",
+        "request": {"api_key": "sk-test-sentinel"},
+    }
+    remote.save_report([row], tmp_path)
+    content = "".join(x.read_text() for x in tmp_path.iterdir())
+    assert "sk-test-sentinel" not in content
+    assert "private_headers" not in content
+    assert "sdk_exception" not in content
+
+
+def test_export_rejects_secret_in_allowlisted_field_without_creating_files(tmp_path):
+    row = {
+        "schema": remote.SCHEMA_VERSION,
+        "answer": "sk-test-sentinel",
+        "status": "COMPLETED",
+    }
+    with pytest.raises(remote.Blocked, match="EXPORT_SECRET"):
+        remote.save_report([row], tmp_path)
+    assert not tmp_path.exists() or not list(tmp_path.iterdir())
+
+
+def test_export_rejects_nested_secret_and_invalid_error_code(tmp_path):
+    with pytest.raises(remote.Blocked, match="EXPORT_SECRET"):
+        remote.save_report([{"retrieved_docs": [{"id": "sk-test-sentinel"}]}], tmp_path)
+    with pytest.raises(remote.Blocked, match="EXPORT_ERROR_CODE"):
+        remote.save_report([{"error_code": "secret provider exception"}], tmp_path)
