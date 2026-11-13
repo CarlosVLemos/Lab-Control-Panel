@@ -1,6 +1,6 @@
 # RAG-001-REMOTE — contrato MVP v2
 
-**Estado:** DRAFT · **FROZEN por humano:** PENDING · **Issue:** #45 · **Escopo:** executor CLI experimental, não serviço de produção.
+**Estado:** FROZEN MVP v2 · **FROZEN por humano:** aprovado em 2026-11-13 ([registro na PR #46](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/46#issuecomment-6853766192)) · **Issue:** #45 · **Escopo:** executor CLI experimental, não serviço de produção.
 
 ## 1. Experimento e integridade
 
