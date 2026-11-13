@@ -332,16 +332,65 @@ def run_pilot(embedder: EmbedClient, generator: GenerateClient, guard: Guard,
     return records
 
 
+# A deliberate allowlist is safer than serializing arbitrary provider dictionaries.
+EXPORT_FIELDS = frozenset({
+    "schema", "run_id", "dataset_sha", "manifest_sha", "case_id", "arm",
+    "model", "embedding_model", "status", "stage", "error_code", "answer",
+    "citations", "retrieved_docs", "input_tokens", "output_tokens",
+    "cached_input_tokens", "cost_estimated_usd", "latency_ms",
+    "review_score", "semantic_correctness", "price_date",
+    "index_embedding_tokens", "index_embedding_cost_estimated_usd",
+    "query_embedding_tokens", "query_embedding_cost_estimated_usd",
+})
+
+
+def _check_export_value(value: Any) -> None:
+    if isinstance(value, str):
+        if KEY_PATTERN.search(value):
+            raise Blocked("EXPORT_SECRET")
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise Blocked("EXPORT_TYPE")
+            _check_export_value(key)
+            _check_export_value(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            _check_export_value(item)
+    elif value is None or isinstance(value, (int, bool)):
+        return
+    elif isinstance(value, float) and math.isfinite(value):
+        return
+    else:
+        raise Blocked("EXPORT_TYPE")
+
+
+def _public_record(row: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(row, dict):
+        raise Blocked("EXPORT_TYPE")
+    public = {key: row[key] for key in EXPORT_FIELDS if key in row}
+    if public.get("error_code") not in (
+        None, "TIMEOUT", "RATE_LIMIT", "PROVIDER_UNAVAILABLE",
+        "INVALID_RESPONSE", "BUDGET_BLOCKED", "CONFIG_BLOCKED",
+        "UNKNOWN", "CALL_LIMIT", "TIER_MISMATCH",
+    ):
+        raise Blocked("EXPORT_ERROR_CODE")
+    _check_export_value(public)
+    return public
+
+
 def save_report(records: Sequence[dict[str, Any]], output_dir: Path) -> None:
-    """Projection by allowlisted data; never serialize SDK objects/exceptions."""
-    output_dir.mkdir(parents=True, exist_ok=True)
+    """Write only sanitized allowlisted fields after checking the entire batch."""
+    safe = [_public_record(row) for row in records]
+    output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     out = output_dir / "rag-001-results.jsonl"
-    out.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in records),
+    out.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in safe),
                    encoding="utf-8")
-    completed = sum(row.get("status") == "COMPLETED" for row in records)
-    total = len(records)
+    completed = sum(row.get("status") == "COMPLETED" for row in safe)
+    total = len(safe)
+
     def sum_cost(field: str) -> str:
-        return str(sum((Decimal(row[field]) for row in records if row.get(field) is not None), Decimal("0")))
+        return str(sum((Decimal(row[field]) for row in safe if row.get(field) is not None), Decimal("0")))
 
     summary = {
         "schema": SCHEMA_VERSION, "completed": completed, "attempts": total,
@@ -368,14 +417,13 @@ def save_report(records: Sequence[dict[str, Any]], output_dir: Path) -> None:
         encoding="utf-8",
     )
 
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="RAG-001 remote pilot (offline by default)")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-usd", type=Decimal)
     parser.add_argument("--max-generation-calls", type=int)
     parser.add_argument("--max-embedding-requests", type=int)
-    parser.add_argument("--out", type=Path, default=Path("rag-001-local"))
+    parser.add_argument("--out", type=Path, default=Path.home() / ".local" / "state" / "lab-control-panel" / "rag-001")
     args = parser.parse_args(argv)
     try:
         manifest, cases = validate_manifest()
@@ -400,7 +448,7 @@ def main(argv: list[str] | None = None) -> int:
         save_report(records, args.out)
         ok = len(records) == 12 and all(row["status"] == "COMPLETED" for row in records)
         print(json.dumps({"status": "COMPLETED" if ok else "INCONCLUSIVE",
-                          "attempts": len(records), "output_dir": str(args.out)}))
+                          "attempts": len(records), "artifacts_written": True}))
         return 0 if ok else 2
     except Exception as exc:
         # Never include exception text, provider headers or request bodies.
