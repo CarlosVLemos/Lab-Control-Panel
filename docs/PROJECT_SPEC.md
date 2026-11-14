@@ -45,3 +45,13 @@ Control API, Execution Engine (worker), Evaluation Engine, Experiment Lab, Polic
 ## Fora do MVP
 
 Agentes autônomos genéricos, execução de código de terceiros, deploy em Kubernetes, produção multi-tenant, autorização financeira e publicação automática de código.
+
+## Recorte de portfólio aprovado em 14/11/2026 — LCP-OBS-001
+
+O escopo V0.1 acima é um **documento de visão original**, não uma alegação de implementação de seus componentes. A prioridade corrente é **observabilidade de execuções agênticas importadas**, independente de modelo/provedor, sem executar agentes ou avaliar respostas com outro LLM.
+
+**Fatia planejada:** upload *local no browser* de arquivo declarativo LCP Evidence v1 + um adaptador externo validado; timeline de eventos/ferramentas/erros, métricas reportadas de duração e tokens, gráfico acumulado em degraus, replay event-based e indicação de dados ausentes. Não enviar trace ao backend nem exigir PostgreSQL novo. Ver [ADR-004](architecture/ADR-004-import-first-agent-observability.md) e [Spec DRAFT](../SDD/spec/LCP-OBS-001/spec.md).
+
+**Não incluído neste marco:** worker Redis/RQ, release gates, canary/rollback, task runner, geração por GPU, chamadas de API pagas, OTLP universal, agentes avaliadores, gravação de mouse, upload servidor e live monitoring. As funcionalidades existentes de Response e Code Evaluation continuam preservadas.
+
+**Execução dos testes:** operador controla instalações, downloads, venv, builds e testes ao fim de cada etapa; Codex prepara código/testes e pode usar Git/GitHub CLI e shell de inspeção. Documentos de planejamento não aprovam implementação por si só.
