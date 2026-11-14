@@ -1,12 +1,12 @@
 # LCP-OBS-001 — Plano de etapas e gates
 
-**Estado: Etapa A autorizada (somente escrita de código/testes); etapas B–E pendentes de gates separados.**
+**Estado:** Etapa A aprovada por testes do operador e CR-001; Etapa B autorizada somente para desenvolvimento (CR-002 FROZEN); etapas C–E permanecem bloqueadas.
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)
-- Revisar ADR-004, spec, contract, tests e [source-agenttrace.md](source-agenttrace.md); fonte AgentTrace selecionada, mas **a amostra real sanitizada depende do operador**. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
+- Revisar ADR-004, spec, contract, tests e [source-agenttrace.md](source-agenttrace.md); amostra AgentTrace já produzida no Atlas e inspecionada pelo revisor; a **publicação/redistribuição da amostra ainda não foi autorizada**. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
 - O operador fornece dependências, arquivos e ambiente. Não fazer `pip install`, `npm ci`, `venv`, downloads, builds, `pytest`, `vitest`, `playwright` ou Docker por iniciativa do Codex.
-- O **envelope próprio** foi aprovado FROZEN v1 para Etapa A. O adaptador AgentTrace permanece DRAFT, dependente de amostra real. Não realizar B–E sem novo gate.
+- O envelope v1 e o perfil AgentTrace estão FROZEN conforme [CR-001/CR-002 aprovadas](APPROVALS_2026-11-14.md). A Etapa B pode ser implementada localmente, com testes preparados para o operador. Não realizar C–E sem novo gate.
 
 ## A — Modelo e validador
 **Escopo autorizado:** schema TypeScript, validação runtime e normalização do envelope LCP v1; invariantes de ordenação, nulidade, eventos, duração total reportada e proveniência. Sem UI completa, adaptador AgentTrace, métricas agregadas ou backend. Usar [CODEX_TASK_A.md](CODEX_TASK_A.md).
@@ -14,8 +14,8 @@
 **Aceite:** contrato passa as verificações de [tests.md](tests.md), usando execução manual do operador no final da etapa; retornar PASS/FAIL/NOT_RUN conforme observado.
 
 ## B — Adaptador externo real
-**Pré-condição:** operador disponibiliza uma linha real sanitizada do dataset AgentTrace, confirma atribuição/licença e aprova o mapeamento em [source-agenttrace.md](source-agenttrace.md).
-**Escopo:** um adaptador único externo que converte a amostra em LCP v1 sem inventar timestamps/tokens/ferramentas.
+**Pré-condição atendida para desenvolvimento:** o operador gerou uma amostra local, Mefisto inspecionou sua estrutura e o perfil do adaptador foi aprovado via [CR-002](CHANGE_REQUEST-002.md). **Pré-condição de publicação:** revisão humana de atribuição/licença e sanitização antes de versionar ou disponibilizar amostras reais.
+**Escopo autorizado:** adaptar uma execução AgentTrace real para o LCP v1 e ajustar validação pública de `agent.name=null` e `event.position`, sem inventar timestamps/tokens/ferramentas. Instrução: [CODEX_TASK_B.md](CODEX_TASK_B.md).
 **Entregáveis:** código, amostra mínima sanitizada permitida, mapeamento campo-a-campo, testes de divergências.
 **Aceite:** totais e ordem conferidos ao arquivo fornecido; desconhecidos continuam nulos. Caso amostra não esteja disponível, etapa fica BLOCKED — não baixar substituto silenciosamente.
 

@@ -1,6 +1,6 @@
 # LCP-OBS-001 — Fonte externa inicial: AgentTrace
 
-**Situação:** fornecedor de dataset **selecionado para o primeiro adaptador**; mapeamento preliminar verificado no código-fonte público. **Amostra específica ainda não foi fornecida, sanitizada ou validada localmente pelo operador.** Não executar nem baixar nada a partir deste documento.
+**Situação:** perfil AgentTrace **aprovado pela CR-002** para desenvolvimento da Etapa B. O operador já gerou uma amostra sanitizada em seu Atlas e o revisor Mefisto relatou inspeção; **não publicada neste repositório**. Não executar nem baixar nada a partir deste documento. Revisão humana de licença e dados sensíveis segue pendente para distribuição.
 
 ## Referências públicas verificadas (14/11/2026)
 - Dataset e 1.400 traces declarados: https://huggingface.co/datasets/pagarsky/agent-trace
@@ -18,11 +18,11 @@
 | `total_duration_ms` | duração entre `perf_counter_ns` start/stop | duração da execução **reportada** |
 | `spans[]` | invocações de ferramentas | eventos `tool` |
 | `spans[].span_id`, `parent_span_id` | IDs/relacionamentos | IDs/parent das ferramentas |
-| `spans[].start_ns/end_ns` | relógio monotônico do processo; não timestamps UTC | intervalos relativos **entre ferramentas** da mesma execução |
+| `spans[].start_ns/end_ns` | relógio monotônico do processo; não timestamps UTC | `event.position` monotonic_ns (CR-002), como números JSON inteiros seguros |
 | `spans[].duration_ms` | duração da chamada | duração observada da ferramenta |
 | `spans[].exit_code` | status numérico da ferramenta | sucesso/erro **somente quando semântica do código de saída é conhecida** |
 | `spans[].telemetry` | CPU, memória pico, I/O do processo | métricas de recursos opcionais; pico RSS **não somável** |
-| `llm_steps[].step_id/step_number` | ID e ordem de etapa | eventos `model` ordenados |
+| `llm_steps[].step_id/step_number` | ID e ordem de etapa | `event.position` ordinal/llm_step; eventos `model` |
 | `llm_steps[].input_tokens/output_tokens` | tokens da etapa, quando disponíveis | uso de tokens `reported`, nunca estimado silenciosamente |
 | `llm_steps[].duration_ms` | duração da etapa, quando disponível | duração reportada da geração |
 | `llm_steps[].tool_calls` | chamadas **propostas pelo modelo** | metadado de intenção; **não contar como ferramenta executada** |
@@ -38,15 +38,15 @@
 7. Falha na conversão de campo esperado não pode causar fallback silencioso para fixture sintética.
 
 ## Protocolo para obter a amostra (executado apenas pelo operador)
-- Operador abre o dataset e obtém **um único trace JSON** de `nl2bash_0_6B...`, preferencialmente com ≥1 span de ferramenta e ao menos um passo LLM.
-- Operador revisa licenças/atribuição, remove dados sensíveis e **elimina `reasoning_content` integralmente** antes de usar/compartilhar.
-- Operador fornece o caminho local para uma amostra pequena e verificável. O Codex pode fazer inspeção de arquivo **sem executar o conteúdo**, mas não deve fazer downloads/instalações por conta própria.
-- Antes de congelar o contrato, confrontar o arquivo verdadeiro com os campos e tipos esperados. Se um campo divergir, atualizar a especificação e registrar decisão humana.
+- Operador **já obteve** um trace JSON de `nl2bash_0_6B...` com 2 spans e 2 LLMSteps, salvo em `/home/carlos/Documentos/www/Ifood/lcp-audit/agenttrace-sample.json`.
+- Script do operador removeu campos textuais incluindo `reasoning_content`; isso não comprova revisão humana de licença/atribuição. Revisar antes de publicar.
+- O arquivo local foi examinado por Mefisto: **1.531 bytes**, SHA-256 `f765bdef22eaed2c7e7e054cd2d3f8c4fbc58d69e3fd05a7bfb5c8fec0977974`; 2 spans (bash/final_answer) e 2 LLMSteps, sem timestamp_utc/metadata. Codex pode ler o arquivo, sem executar seu conteúdo nem baixar dependências.
+- A CR-002 foi congelada após o relatório de inspeção e aprovação humana explícita. Divergência posterior da amostra/contrato requer nova decisão, não corrigir mapeamento silenciosamente.
 
 ## Gates
 - **G0:** escolha da fonte e mapeamento preliminar: concluídos por documentação pública.
-- **G1:** recebimento, sanitização e inspeção de uma linha real: **PENDING — operador**.
-- **G2:** aprovação humana de contrato **específico do adaptador AgentTrace**: **PENDING**. O envelope LCP v1, usado na Etapa A, já está FROZEN separadamente.
-- **G3:** implementar e validar o adaptador: **NÃO INICIADO**.
+- **G1:** amostra local obtida e inspecionada pelo revisor; revisão de licença para redistribuição pendente.
+- **G2:** perfil e ajustes públicos aprovados (CR-002 FROZEN).
+- **G3:** implementação Etapa B **AUTORIZADA SOMENTE PARA ESCRITA E TESTES PREPARADOS**; validação pelo operador NOT_RUN.
 
 Fonte externa não é prova de autenticidade da execução nem autoriza executar comandos que apareçam em suas mensagens.

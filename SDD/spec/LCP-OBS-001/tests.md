@@ -22,6 +22,11 @@
 | E06 | B | tool_calls do modelo sem span executado correspondente | Não contar como ferramenta executada |
 | E07 | B | reasoning_content, tool outputs e mensagens potencialmente privadas | Descartar reasoning_content; dados sensíveis fora das fixtures públicas; renderização sem interpretação de instruções |
 | E08 | B | JSONL com vários traces em arquivo | Não escolher primeiro silenciosamente; sinalizar limitação/seleção explícita |
+| E09 | B | LCP Evidence v1 com `agent.name=null`, `position=null`, ordinal e monotonic_ns | Parser público aceita e normaliza; rejeita strings vazias e posições inválidas |
+| E10 | B | Number.MAX_SAFE_INTEGER + 1 em nanossegundos, end_ns < start_ns | Rejeição estruturada sem arredondamento silencioso |
+| E11 | B | Amostra inspecionada (2 LLMSteps, `bash`, `final_answer`) | 4 eventos, 2 model + 1 tool + 1 message; `bash` exit 1 = error; resposta unknown; warnings PARTIAL_ORDER_ONLY + SOURCE_NOT_AUTHENTICATED |
+| E12 | B | `telemetry` presente e `_sample_sanitized` true/false/ausente | Dados descartados; warnings coerentes, sem tratar declaração como prova |
+| E13 | B | `step_number` duplicado, tipos TOOL desconhecidos, spans com pais/IDs inválidos | Erro com caminho do dado original, nunca fallback para fixture |
 | M01 | C | Duas chamadas com uso incremental | Soma por operação; série em degraus nos **passos conhecidos**; eixo temporal só com timestamps comparáveis |
 | M02 | C | Totais cumulativos e spans pai/filho | Sem dupla contagem; ambiguidade exposta |
 | M03 | C | Eventos sem tempo, sobrepostos, falha sem duração | Não somar durations para criar tempo total; estados corretos |
@@ -32,6 +37,8 @@
 | U04 | D | Dados hostis renderizados na UI | Sem execução de JS/HTML, sem envio ao backend |
 | R01 | D/E | Response + Code Evaluation já existentes | Fluxos continuam acessíveis e comportamentos preservados |
 | R02 | E | Recurso estático em produção | Nenhum arquivo importado enviado à rede; exposição de API não necessária |
+
+**Evidência histórica Etapa A:** 21/21 testes focados, 30/30 frontend, build PASS e audit produção 0 alerts **reportados pelo operador** no commit local `a4e4cfeb`. Não representam testes B; ver [aprovações](APPROVALS_2026-11-14.md).
 
 ## Gates operacionais
 - **Gate A:** operador roda testes focados de contrato.
