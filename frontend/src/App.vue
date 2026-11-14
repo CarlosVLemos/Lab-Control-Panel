@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import CodeEvaluationView from './components/CodeEvaluationView.vue'
+import ExperimentComparisonView from './components/ExperimentComparisonView.vue'
 import ObservabilityView from './components/ObservabilityView.vue'
 import { fixtureSource } from './data/synthetic-fixture'
 import { HttpReportSource, type ReportSource } from './data/report-source'
@@ -14,7 +15,8 @@ const state = ref<ViewState>('empty')
 const selected = ref<ExperimentCase | null>(null)
 const filter = ref<Filter>('all')
 const errorMessage = ref('')
-const activeView = ref<'response' | 'code' | 'observability'>('response')
+const activeView = ref<'experiments' | 'observability'>('experiments')
+const experimentView = ref<'swebench' | 'code' | 'response'>('swebench')
 const filters: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' }, { value: 'improved', label: 'Melhorou' },
   { value: 'regressed', label: 'Regrediu' }, { value: 'stable', label: 'Estável' },
@@ -50,10 +52,17 @@ function execute() { return executeFrom(source) }
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#main-content" aria-label="Ir para o conteúdo">LCP</a>
-      <nav class="view-switcher" aria-label="Selecionar avaliação"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Classificação</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Código</button><button type="button" :class="{ active: activeView === 'observability' }" @click="activeView = 'observability'">Observabilidade</button></nav>
+      <nav class="view-switcher" aria-label="Navegação principal"><button type="button" :class="{ active: activeView === 'experiments' }" @click="activeView = 'experiments'">Experimentos</button><button type="button" :class="{ active: activeView === 'observability' }" @click="activeView = 'observability'">Observabilidade</button></nav>
     </header>
 
-    <template v-if="activeView === 'response'">
+    <nav v-if="activeView === 'experiments'" class="experiment-switcher" aria-label="Selecionar experimento">
+      <button type="button" :class="{ active: experimentView === 'swebench' }" @click="experimentView = 'swebench'">SWE-bench</button>
+      <button type="button" :class="{ active: experimentView === 'code' }" @click="experimentView = 'code'">CODE-001</button>
+      <button type="button" :class="{ active: experimentView === 'response' }" @click="experimentView = 'response'">Classificação sintética</button>
+    </nav>
+
+    <ExperimentComparisonView v-if="activeView === 'experiments' && experimentView === 'swebench'" />
+    <template v-else-if="activeView === 'experiments' && experimentView === 'response'">
     <section id="main-content" class="hero" aria-labelledby="page-title">
       <div>
         <h1 id="page-title">Comparação de classificadores</h1>
@@ -130,7 +139,7 @@ function execute() { return executeFrom(source) }
     </template>
 
     </template>
-    <CodeEvaluationView v-else-if="activeView === 'code'" />
+    <CodeEvaluationView v-else-if="activeView === 'experiments'" />
     <ObservabilityView v-else />
   </main>
 </template>
