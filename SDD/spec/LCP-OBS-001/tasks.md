@@ -1,12 +1,12 @@
 # LCP-OBS-001 — Plano de etapas e gates
 
-**Estado:** Etapa A aprovada por testes do operador e CR-001; Etapa B autorizada somente para desenvolvimento (CR-002 FROZEN); etapas C–E permanecem bloqueadas.
+**Estado:** Etapas A e B validadas pelo operador; B com parecer Mefisto `passed`. Etapa C tem contrato proposto e tarefa preparada **aguardando autorização do operador**; Etapas D/E bloqueadas.
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)
 - Revisar ADR-004, spec, contract, tests e [source-agenttrace.md](source-agenttrace.md); amostra AgentTrace já produzida no Atlas e inspecionada pelo revisor; a **publicação/redistribuição da amostra ainda não foi autorizada**. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
 - O operador fornece dependências, arquivos e ambiente. Não fazer `pip install`, `npm ci`, `venv`, downloads, builds, `pytest`, `vitest`, `playwright` ou Docker por iniciativa do Codex.
-- O envelope v1 e o perfil AgentTrace estão FROZEN conforme [CR-001/CR-002 aprovadas](APPROVALS_2026-11-14.md). A Etapa B pode ser implementada localmente, com testes preparados para o operador. Não realizar C–E sem novo gate.
+- O envelope v1 e o perfil AgentTrace estão FROZEN conforme [CR-001/CR-002 aprovadas](APPROVALS_2026-11-14.md). Etapa B implementada e validada **somente no clone local**, ainda sem push/merge. A Etapa C tem [proposta de contrato](METRICS_CONTRACT_C_DRAFT.md) e [tarefa pronta](CODEX_TASK_C.md). Não iniciar C sem autorização de execução pelo operador; D/E bloqueadas.
 
 ## A — Modelo e validador
 **Escopo autorizado:** schema TypeScript, validação runtime e normalização do envelope LCP v1; invariantes de ordenação, nulidade, eventos, duração total reportada e proveniência. Sem UI completa, adaptador AgentTrace, métricas agregadas ou backend. Usar [CODEX_TASK_A.md](CODEX_TASK_A.md).
@@ -20,7 +20,7 @@
 **Aceite:** totais e ordem conferidos ao arquivo fornecido; desconhecidos continuam nulos. Caso amostra não esteja disponível, etapa fica BLOCKED — não baixar substituto silenciosamente.
 
 ## C — Métricas de observabilidade
-**Escopo:** contagens de eventos/chamadas/erros, duração total observável, uso por chamada, tokens acumulados **por etapa ordinal** (sem timestamps imaginados), agregação ciente de parent/child e cumulatividade.
+**Escopo proposto:** [contrato de métricas C](METRICS_CONTRACT_C_DRAFT.md): contagens observáveis, duração total com origem, cobertura de uso e tokens acumulados **por etapa LLM** (sem timestamps imaginados), agregação cuidadosa com lacunas, parent/child e cumulatividade. Execução [CODEX_TASK_C.md](CODEX_TASK_C.md) sujeita à autorização do operador.
 **Entregáveis:** funções puras TS e testes determinísticos.
 **Aceite:** fixtures completas/incompletas/sobrepostas, não duplicação, sem inventar custo/tempo; bateria de testes aplicada **pelo operador ao final**.
 
