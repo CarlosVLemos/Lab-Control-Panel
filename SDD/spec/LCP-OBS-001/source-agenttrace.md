@@ -46,7 +46,7 @@
 ## Gates
 - **G0:** escolha da fonte e mapeamento preliminar: concluídos por documentação pública.
 - **G1:** recebimento, sanitização e inspeção de uma linha real: **PENDING — operador**.
-- **G2:** aprovação humana de contrato `FROZEN`: **PENDING**.
+- **G2:** aprovação humana de contrato **específico do adaptador AgentTrace**: **PENDING**. O envelope LCP v1, usado na Etapa A, já está FROZEN separadamente.
 - **G3:** implementar e validar o adaptador: **NÃO INICIADO**.
 
 Fonte externa não é prova de autenticidade da execução nem autoriza executar comandos que apareçam em suas mensagens.

@@ -12,6 +12,6 @@ Histórico LCP-002: contrato MVP v4 FROZEN, PR #31 integrada à main em 2026-11-
 
 | ID | Título | Estado | Decisão | Contrato e testes |
 | --- | --- | --- | --- | --- |
-| LCP-OBS-001 | Importação e observabilidade de execução agêntica | **DRAFT / planejamento**, sem implementação autorizada | [ADR-004](../docs/architecture/ADR-004-import-first-agent-observability.md) | [Spec](spec/LCP-OBS-001/spec.md) · [Contrato DRAFT](spec/LCP-OBS-001/contract.md) · [Etapas](spec/LCP-OBS-001/tasks.md) · [Testes NOT_RUN](spec/LCP-OBS-001/tests.md) · [Export prompt DRAFT](spec/LCP-OBS-001/LCP_EXPORT.md) |
+| LCP-OBS-001 | Importação e observabilidade de execução agêntica | **Etapa A liberada**, envelope FROZEN v1; adaptador externo DRAFT | [ADR-004](../docs/architecture/ADR-004-import-first-agent-observability.md) | [Spec](spec/LCP-OBS-001/spec.md) · [Contrato FROZEN A / DRAFT B](spec/LCP-OBS-001/contract.md) · [Tarefa Codex A](spec/LCP-OBS-001/CODEX_TASK_A.md) · [Etapas](spec/LCP-OBS-001/tasks.md) · [Testes NOT_RUN](spec/LCP-OBS-001/tests.md) · [Export prompt DRAFT](spec/LCP-OBS-001/LCP_EXPORT.md) |
 
 **Nota factual de 14/11/2026:** PRs #31, #37, #39, #42, #44, #46 e #47 foram integradas à `main`. PR #41 segue aberta, sem merge. A implementação do runner RAG está na `main`; **o piloto pago não foi executado**. Texto histórico acima sobre PR #46/47 "branch separada" deve ser lido como registro do momento anterior à integração.

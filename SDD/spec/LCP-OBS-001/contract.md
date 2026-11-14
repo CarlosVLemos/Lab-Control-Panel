@@ -1,6 +1,6 @@
-# LCP-OBS-001 — Contrato de importação e métricas (DRAFT v1)
+# LCP-OBS-001 — Contrato de importação e métricas (v1, freeze parcial)
 
-**Estado: DRAFT — NÃO FROZEN.** Nomes e limites abaixo são propostos para revisão humana; nenhuma API pública/persistência foi aprovada.
+**Estado:** **FROZEN v1 apenas para o envelope LCP Evidence e o parser/validador da Etapa A**, por continuidade autorizada pelo operador em 14/11/2026. **Adaptador AgentTrace da Etapa B permanece DRAFT** até inspeção de amostra real e confirmação do contrato de mapeamento. Isso não autoriza downloads, instalações, testes, builds, push que rode CI, nem execução do agente externo. Nenhuma API/persistência foi aprovada.
 
 ## 1. Envelope declarativo
 Um arquivo JSON UTF-8 com objeto raiz (JSONL apenas para o adaptador externo que for explicitamente definido). Proposta de campos:
@@ -18,6 +18,7 @@ Um arquivo JSON UTF-8 com objeto raiz (JSONL apenas para o adaptador externo que
   "agent": {"name": "agent-a", "model": null},
   "started_at": null,
   "ended_at": null,
+  "total_duration_ms": null,
   "events": [
     {
       "id": "evt-1",
@@ -35,12 +36,12 @@ Um arquivo JSON UTF-8 com objeto raiz (JSONL apenas para o adaptador externo que
 }
 ```
 
-A amostra acima é uma **fixture ilustrativa**, não resultado medido. Os valores desconhecidos são `null`. Não exigir timestamps, custo, modelo ou uso para aceitar observação parcial. Cada evento precisa de identidade e sequência; `kind` proposto: `model`, `tool`, `message`, `system`; `status`: `success`, `error`, `unknown`.
+A amostra acima é uma **fixture ilustrativa**, não resultado medido. Os valores desconhecidos são `null`. Campos obrigatórios: `schema_version`, `run_id`, `source.kind`, `source.format`, `source.producer`, `agent.name`, `events[]`; por evento: `id`, `seq`, `kind`, `name`, `status`. Campos opcionais podem estar ausentes ou ser `null`; o parser os normaliza para `null` sem criar valores. `kind`: `model`, `tool`, `message`, `system`; `status`: `success`, `error`, `unknown`. `seq` é inteiro positivo, único por execução. Eventos vazios são válidos, com aviso de observabilidade limitada. `total_duration_ms` é a **duração total reportada**, não resultado de soma de eventos.
 
 ## 2. Uso e confiança
 - `usage` por evento é opcional e descreve **somente aquela operação**: `input_tokens: number|null`, `output_tokens: number|null`, `duration_ms: number|null`, `cost_usd: string|null`. Contagem de tokens não deve ser projetada em segundos quando só existe `step_number`.
 - `source.kind` diferencia `trace`, `self_report`, `fixture`. `reference` não implica autenticação. A UI nomeia os dados `reported`, `derived`, `estimated` ou `unavailable`.
-- A soma de uso só é permitida quando não há sobreposição/cumulatividade ambígua; campos ambíguos ficam `unavailable` com explicação. Tempo de execução total deriva do intervalo da execução, não da soma das durações de eventos.
+- A soma de uso só é permitida quando não há sobreposição/cumulatividade ambígua; campos ambíguos ficam `unavailable` com explicação. Duração total pode ser **reportada** em `total_duration_ms` OU derivada de `started_at`/`ended_at` com relógios comparáveis. Se ambos estão presentes e conflitantes, registrar discrepância; nunca substituir um silenciosamente. Não somar duração de eventos para produzir duração total.
 - USD é opcional: preservar tarifa e origem quando uma estimativa existir; sem referência tarifária não gerar custo estimado automaticamente.
 
 ## 3. Normalização interna
@@ -62,4 +63,4 @@ Fonte **selecionada para o primeiro adaptador**: [AgentTrace](source-agenttrace.
 Preservar `frontend/src/App.vue` e fonte HTTP Response, `CodeEvaluationView.vue`, CODE v1a e RAG-001 sem modificar seus contratos. Nova interface deve ser independente e testável.
 
 ## 7. Gate
-Após o operador inspecionar uma amostra externa real, revisar este contrato e registrar aprovação **FROZEN** antes de implementação. Divergência contratual posterior exige Change Request.
+**Etapa A:** envelope/validador FROZEN v1; autorizada somente a escrita de código e testes. Operador executará testes depois. **Etapa B:** parser AgentTrace permanece DRAFT até o operador disponibilizar a amostra concreta e aprovar mapeamento atualizado. Qualquer alteração no envelope FROZEN requer Change Request; nenhuma etapa seguinte avança automaticamente.

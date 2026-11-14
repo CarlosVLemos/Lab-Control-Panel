@@ -1,6 +1,6 @@
 # LCP-OBS-001 — Especificação funcional da observabilidade agêntica
 
-**Estado:** DRAFT / PLANNED. **NÃO autoriza implementação ainda.**
+**Estado:** **Etapa A autorizada para implementação (contrato de envelope FROZEN v1)**. Etapas B–E continuam planejadas, sem execução autorizada automaticamente. O adaptador AgentTrace permanece DRAFT até a amostra ser inspecionada.
 **Trilha:** CRITICAL (arquivos de terceiros, fronteira de importação + interface pública).
 **Base de planejamento:** `main@8d4efebc305b2cf671d807ea42d82873373434ff` em 2026-11-14.
 **Decisão:** [ADR-004](../../../docs/architecture/ADR-004-import-first-agent-observability.md).
@@ -55,4 +55,4 @@ Principal risco: apresentação visual mais precisa do que a fonte permite; segu
 - Cada etapa tem teste preparado e relatório de execução **do operador**, não do Codex, salvo autorização pontual posterior.
 - Handoff e documentação atualizados sem alegar live monitoring, GPU ou integração de provedor.
 
-**Aprovação humana de contrato FROZEN e execução é gate separado; esta Spec ainda está DRAFT.**
+**Gate 14/11/2026:** pela orientação do operador para avançar, a Etapa A (modelo e validador do envelope LCP v1) está liberada para **edição de código/testes apenas**. O usuário mantém o controle da execução. Etapa B continua dependente de inspeção de amostra real, sem FROZEN do adaptador; ver [tarefa para Codex](CODEX_TASK_A.md).

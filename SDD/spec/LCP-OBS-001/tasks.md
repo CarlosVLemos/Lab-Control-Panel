@@ -1,15 +1,15 @@
 # LCP-OBS-001 — Plano de etapas e gates
 
-**Estado: DRAFT; sem autorização de implementação.**
+**Estado: Etapa A autorizada (somente escrita de código/testes); etapas B–E pendentes de gates separados.**
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)
 - Revisar ADR-004, spec, contract, tests e [source-agenttrace.md](source-agenttrace.md); fonte AgentTrace selecionada, mas **a amostra real sanitizada depende do operador**. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
 - O operador fornece dependências, arquivos e ambiente. Não fazer `pip install`, `npm ci`, `venv`, downloads, builds, `pytest`, `vitest`, `playwright` ou Docker por iniciativa do Codex.
-- Marcar `FROZEN` somente após aprovação humana; não iniciar implementação enquanto DRAFT.
+- O **envelope próprio** foi aprovado FROZEN v1 para Etapa A. O adaptador AgentTrace permanece DRAFT, dependente de amostra real. Não realizar B–E sem novo gate.
 
 ## A — Modelo e validador
-**Escopo:** schema TypeScript, validação runtime e normalização do envelope LCP v1; invariantes de ordenação, nulidade, eventos e proveniência. Sem UI completa nem backend.
+**Escopo autorizado:** schema TypeScript, validação runtime e normalização do envelope LCP v1; invariantes de ordenação, nulidade, eventos, duração total reportada e proveniência. Sem UI completa, adaptador AgentTrace, métricas agregadas ou backend. Usar [CODEX_TASK_A.md](CODEX_TASK_A.md).
 **Entregáveis:** módulos TypeScript pequenos e fixtures de contrato, testes escritos mas não executados.
 **Aceite:** contrato passa as verificações de [tests.md](tests.md), usando execução manual do operador no final da etapa; retornar PASS/FAIL/NOT_RUN conforme observado.
 

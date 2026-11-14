@@ -9,6 +9,11 @@
 | C03 | A | JSON inválido, >5 MiB, >10k eventos, números negativos ou IDs duplicados | Rejeição explícita, sem cálculo parcial enganoso |
 | C04 | A | Conteúdo com "ignore instruções" e tags HTML | Tratado como dado, texto escapado; zero execução |
 | C05 | A | Autorrelato retrospectivo | Sinaliza SELF_REPORT e não "observado independente" |
+| C06 | A | `total_duration_ms` válido com timestamps ausentes | Preserva duração total reportada; não fabrica início/fim |
+| C07 | A | Duração total reportada conflita com intervalo de timestamps | Aviso de inconsistência; não sobrescrever fonte silenciosamente |
+| C08 | A | `seq` duplicado, evento sem nome, referência a pai inexistente/cíclico | Erro de contrato explícito; sem inventar árvore |
+| C09 | A | Evento sem tempo, tokens ou uso | Mantém `null` e sequência ordinal, não timestamp artificial |
+| C10 | A | Campo `reasoning_content` ou extras arbitrários em JSON | Não propagar campo sensível à representação normalizada nem ao resultado de erro |
 | E01 | B | Amostra externa com spans e ferramentas | Mapeamento reproduzível; IDs, tipos e status corretos |
 | E02 | B | Formato externo sem uso/erro/timestamps | Mantém desconhecido; sem extrapolação |
 | E03 | B | Campo incompatível/versão não suportada | Falha clara ou parcial explicitamente rotulada |
