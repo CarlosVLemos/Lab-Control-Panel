@@ -61,3 +61,13 @@ Keep prompts/task plans bounded: objective, scope, paths, non-goals, checks and 
 ## Product boundaries
 
 Production evaluation/policy remains separate from the developer workflow. `INCONCLUSIVE` must not promote a release; LLM-as-judge does not replace deterministic security checks. LCP's code runner accepts only controlled fixtures until isolation and a threat model are verified. Development-agent verdicts do not supersede product PolicyDecision or automated checks. A hash is a fingerprint, not signed provenance.
+
+## Operator execution boundaries — supersedes generic "run tests" language (2026-11-14)
+
+**Allowed without extra runtime approval:** read-only repository/OS inspection, `git status/log/diff`, `gh`/GitHub CLI inspection, browsing authorized repository context, writing docs/code in approved branches, commits/pushes as separately authorized by the task. Ordinary shell is not categorically prohibited.
+
+**Requires operator approval of the specific operation or batch:** environment creation (`venv`), downloads, dependency/package installation, `pip`, `npm install/ci`, model pull, builds, test execution (`pytest`, `npm test`, Playwright), container start/build, migrations, execution of agents/LLMs, paid requests, and potentially destructive filesystem/Git operations. Do not do those "just to verify". Offer commands for the **operator** and mark `NOT_RUN` or `BLOCKED` until results are supplied. Tests are planned before implementation but executed at the end of each authorized stage under operator control.
+
+A push/PR may invoke CI that installs dependencies and runs tests. Verify this effect and get permission first; for docs-only planning changes that do not require CI, include `[skip ci]` in commit messages where supported. `[skip ci]` does not guarantee every externally configured workflow will skip, so verify repository workflow before push.
+
+**LCP-OBS-001 planning:** see `SDD/spec/LCP-OBS-001/` and ADR-004. Long-form Spec, contract, tasks and tests are required despite the narrow MVP scope; contract must become human-approved FROZEN before implementation. Do not expand this to another architecture review cycle or add platforms/frameworks without a concrete acceptance need.

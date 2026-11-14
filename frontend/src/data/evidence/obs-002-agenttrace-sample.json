@@ -1,0 +1,954 @@
+{
+  "schema_version": "obs-002/real-sample-v1",
+  "source": {
+    "dataset": "pagarsky/agent-trace",
+    "revision": null,
+    "revision_note": "The local manifest did not record a Hugging Face revision.",
+    "path": "agenttrace/agenttrace-sample.jsonl",
+    "local_sha256": "b7aaff70cfa9e5e240b402c07641f442febd9d8c762f5d5ba50bc543be8c3b5f",
+    "license": "Apache-2.0; upstream prompt-source terms also apply",
+    "source_authenticity_verified": false,
+    "reasoning_content_included": false
+  },
+  "traces": [
+    {
+      "trace_id": "dc797f46-d2f2-453c-b5d3-3d8e761b395b",
+      "timestamp_utc": "2026-03-28T13:32:06.997116+00:00",
+      "prompt": "Write a python function to remove first and last occurrence of a given character from the string.\n\nTest cases:\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "mbpp",
+      "task_id": 11,
+      "run_id": "collect-0_6B-20260328T133144Z-mbpp",
+      "total_duration_ms": 18909.24975,
+      "tool_span_count": 1,
+      "llm_step_count": 1,
+      "raw_file": "datasets/mbpp_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 0,
+      "spans": [
+        {
+          "span_id": "a5299278-d41e-4ee1-a6ca-6d3265d35e25",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': \"def remove_occurrence(s, char):\\n    s = list(s)\\n    i = s.index(char)\\n    del s[i]\\n    return ''.join(s)\"}",
+          "tool_output": "def remove_occurrence(s, char):\n    s = list(s)\n    i = s.index(char)\n    del s[i]\n    return ''.join(s)",
+          "start_ns": 885980259162625,
+          "end_ns": 885980259166833,
+          "duration_ms": 0.004208,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 5.999999999950489e-06,
+            "system_time_s": 6.0000000000060005e-06,
+            "max_rss_bytes": 168804352,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "58259a84-7140-42c3-a53c-f04d37d437d9",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1490,
+          "output_tokens": 1544
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "5ce8ad22-6846-486b-9295-e88e0cbbeebe",
+      "timestamp_utc": "2026-03-28T13:32:12.181921+00:00",
+      "prompt": "Write a function to sort a given matrix in ascending order according to the sum of its rows.\n\nTest cases:\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\nassert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "mbpp",
+      "task_id": 12,
+      "run_id": "collect-0_6B-20260328T133144Z-mbpp",
+      "total_duration_ms": 5183.729958,
+      "tool_span_count": 1,
+      "llm_step_count": 1,
+      "raw_file": "datasets/mbpp_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 1,
+      "spans": [
+        {
+          "span_id": "8b07121d-d223-4a0f-9a1e-57a95e104638",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'def sort_by_row_sums(matrix):\\n    return sorted(matrix, key=lambda x: sum(x))'}",
+          "tool_output": "def sort_by_row_sums(matrix):\n    return sorted(matrix, key=lambda x: sum(x))",
+          "start_ns": 885985444318166,
+          "end_ns": 885985444321666,
+          "duration_ms": 0.0035,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 6.999999999979245e-06,
+            "system_time_s": 2.9999999999752447e-06,
+            "max_rss_bytes": 169148416,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "dbdcb5e7-2f98-43e9-b581-b5cfecf790d2",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1617,
+          "output_tokens": 515
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "aad9576b-9be0-4e5b-897e-00354799fec6",
+      "timestamp_utc": "2026-03-28T13:33:02.632323+00:00",
+      "prompt": "Write a function to count the most common words in a dictionary.\n\nTest cases:\nassert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]\nassert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]\nassert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "mbpp",
+      "task_id": 13,
+      "run_id": "collect-0_6B-20260328T133144Z-mbpp",
+      "total_duration_ms": 50448.81475,
+      "tool_span_count": 2,
+      "llm_step_count": 2,
+      "raw_file": "datasets/mbpp_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 2,
+      "spans": [
+        {
+          "span_id": "2de4680b-1c94-4eab-884e-7f143ab48cde",
+          "type": "TOOL",
+          "tool_name": "python_interpreter",
+          "tool_input": "kwargs={'code': \"from collections import Counter\\nimport sys\\n# Example input list\\nwords = ['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"}",
+          "tool_output": "Error: Code parsing failed on line 4 due to: SyntaxError: '[' was never closed (<unknown>, line 4)\nwords = ['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\n         ^",
+          "start_ns": 885996564841958,
+          "end_ns": 885996565066750,
+          "duration_ms": 0.224792,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.00015999999999993797,
+            "system_time_s": 7.299999999998974e-05,
+            "max_rss_bytes": 169558016,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "09bcc6b8-9f87-4694-b4b0-e1e80edf60cd",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': \"The most common words in the dictionary are: [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]\"}",
+          "tool_output": "The most common words in the dictionary are: [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]",
+          "start_ns": 886035892736375,
+          "end_ns": 886035892747583,
+          "duration_ms": 0.011208,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 1.6999999999933735e-05,
+            "system_time_s": 1.1000000000038757e-05,
+            "max_rss_bytes": 169689088,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "c3661934-4aed-44f9-930a-f13dcd889ab7",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1641,
+          "output_tokens": 998
+        },
+        {
+          "step_id": "01b21c76-520c-4584-871c-6498e77845a7",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1814,
+          "output_tokens": 2657
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "b7bca2f9-87dc-460e-9b10-a0c235ea5749",
+      "timestamp_utc": "2026-03-28T20:50:37.098003+00:00",
+      "prompt": "Recursively finds all files with any cased text \"Hello\" in the '/testdata/system/folder1' folder, and precedes found string with its number in file.\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "nl2bash",
+      "task_id": 0,
+      "run_id": "collect-0_6B-20260328T133144Z-nl2bash",
+      "total_duration_ms": 15910.931417,
+      "tool_span_count": 2,
+      "llm_step_count": 2,
+      "raw_file": "datasets/nl2bash_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 1000,
+      "spans": [
+        {
+          "span_id": "6fe3fb4a-52f3-4225-8597-faf01d936275",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"grep -r 'Hello' /testdata/system/folder1\"}",
+          "tool_output": "exit_code: 1",
+          "start_ns": 912284931057083,
+          "end_ns": 912284946703458,
+          "duration_ms": 15.646375,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.003092000000000048,
+            "system_time_s": 0.009594999999999996,
+            "max_rss_bytes": 170000384,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "926d9715-576e-4a58-9b9e-67bc708ed76a",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': \"No files found matching 'Hello' in the specified directory. The search command resulted in an exit code 1.\"}",
+          "tool_output": "No files found matching 'Hello' in the specified directory. The search command resulted in an exit code 1.",
+          "start_ns": 912290047787708,
+          "end_ns": 912290047791416,
+          "duration_ms": 0.003708,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 8.999999999925734e-06,
+            "system_time_s": 7.000000000034756e-06,
+            "max_rss_bytes": 170065920,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "59d5de89-a240-4860-ae8a-816a0d059aee",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1510,
+          "output_tokens": 944
+        },
+        {
+          "step_id": "dcaba618-cf10-4417-b9d6-3b22aba99d7a",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1612,
+          "output_tokens": 495
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "09b4b229-3de0-4a12-b16c-f8ef671cbde5",
+      "timestamp_utc": "2026-03-28T21:33:10.624755+00:00",
+      "prompt": "Recursively finds all files with whole word \"foo\" in the '/testdata/system', and precedes found string with its number in file.\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "nl2bash",
+      "task_id": 1,
+      "run_id": "collect-0_6B-20260328T133144Z-nl2bash",
+      "total_duration_ms": 2553495.658209,
+      "tool_span_count": 1,
+      "llm_step_count": 0,
+      "raw_file": "datasets/nl2bash_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 1001,
+      "spans": [
+        {
+          "span_id": "c94c058b-6b9b-4bb9-8d78-a832a2969a1e",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"find /testdata/system -type f -name '*.*' | grep -r 'foo' | awk '{print $1, $2, $3}'\"}",
+          "tool_output": "exit_code: 0\nstdout:\n./testdata/workspace/project1/file1.php:foo the over\n./testdata/workspace/logs/file0.c:foo init fox\n./testdata/workspace/logs/file1.log:foo alpha delta\n./testdata/workspace/data/file0.py:foo the beta\n./testdata/system/folder1/file0.txt:foo the fox\n./testdata/system/folder1/file0.txt:foo alpha gamma\n./testdata/system/folder1/subfolder2/file0.log:foo quick lazy\n./.venv/bin/activate.nu:# To customize\n./.venv/bin/activate.nu:# the \"activate\"\n./.venv/lib/python3.10/site-packages/jiter-0.12.0.dist-info/METADATA:json_with_dupes = b'{\"foo\":\n./.venv/lib/python3.10/site-packages/jiter-0.12.0.dist-info/METADATA:print(result) # Output:\n./.venv/lib/python3.10/site-packages/mdurl/_parse.py:# e.g. in\n./.venv/lib/python3.10/site-packages/mdurl/_parse.py:# i.e. in\n./.venv/lib/python3.10/site-packages/mdurl/_parse.py: # This\n./.venv/lib/python3.10/site-packages/mdurl/_parse.py: # resolution\n./.venv/lib/python3.10/site-packages/packaging/utils.py: >>> canonicalize_version('foo\n./.venv/lib/python3.10/site-packages/packaging/utils.py: 'foo bar\n./.venv/lib/python3.10/site-packages/aiohttp/web_app.py: # of\n./.venv/lib/python3.10/site-packages/aiohttp/web_urldispatcher.py: For example\n./.venv/lib/python3.10/site-packages/aiohttp/cookiejar.py: # Get\n./.venv/lib/python3.10/site-packages/aiohttp/cookiejar.py: # Get\n./.venv/lib/python3.10/site-packages/rich-14.2.0.dist-info/METADATA:>>> my_list =\n./.venv/lib/python3.10/site-packages/rich-14.2.0.dist-info/METADATA: \"foo\": \"bar\",\n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/numpy-2.2.6.dist-info/RECORD:numpy/f2py/tests/<redacted-repo-path>  \n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: ... return\n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: Markup('<a href=\"/foo\">foo</a>')\n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: >>> Markup(\"<em>%s</em>\")\n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: Markup('<em>foo &amp;\n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: >>> Markup(\"<em>Hello</em>\n./.venv/lib/python3.10/site-packages/markupsafe/__init__.py: Markup('<em>Hello</em> &lt;foo&gt;')\nBinary file ./.venv/lib/python3.10/site-packages/markupsafe/__pycache__/__init__.cpython-310.pyc\n./.venv/lib/python3.10/site-packages/h11/_readers.py: f\"malformed chunk\nBinary file ./.venv/lib/python3.10/site-packages/h11/__pycache__/_readers.cpython-310.pyc\n./.venv/lib/python3.10/site-packages/h11/_abnf.py:# e.g. \"foo\n./.venv/lib/python3.10/site-packages/h11/_headers.py: # Transfer-Encoding:\n./.venv/lib/python3.10/site-packages/h11/_headers.py: # foo;\n./.venv/lib/python3.10/site-packages/h11/_headers.py: # foo;\n./.venv/lib/python3.10/site-packages/huggingface_hub/hub_mixin.py: A dictionary\n./.venv/lib/python3.10/site-packages/huggingface_hub/hub_mixin.py: 'http://hostname': 'foo.bar:4012'}`.\n./.venv/lib/python3.10/site-packages/huggingface_hub/hub_mixin.py: A dictionary\n./.venv/lib/python3.10/site-packages/huggingface_hub/hub_mixin.py: 'http://hostname': 'foo.bar:4012'}`).\n./.venv/lib/python3.10/site-packages/huggingface_hub/keras_mixin.py: `{'http': 'foo.bar:3128',\n./.venv/lib/python3.10/site-packages/huggingface_hub/__init__.py: from .foo\n./.venv/lib/python3.10/site-packages/huggingface_hub/__init__.py: {'foo': ['someattr']}\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py: Valid: `\"foo\"`,\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py: Not valid:\nBinary file ./.venv/lib/python3.10/site-packages/huggingface_hub/utils/__pycache__/_validators.cpython-310.pyc\nBinary file ./.venv/lib/python3.10/site-packages/huggingface_hub/utils/__pycache__/tqdm.cpython-310.pyc\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> disable_progress_bars(\"peft.foo\")\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> assert\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> assert\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> enable_progress_bars(\"peft.foo.bar\")\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> assert\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> assert\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: # No\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> for\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: # Progress\n./.venv/lib/python3.10/site-packages/huggingface_hub/utils/tqdm.py: >>> for\nBinary file ./.venv/lib/python3.10/site-packages/huggingface_hub/__pycache__/hf_api.cpython-310.pyc\nBinary file ./.venv/lib/python3.10/site-packages/huggingface_hub/__pycache__/repocard.cpython-310.pyc\nBinary file ./.venv/lib/python3.10/site-packages/huggingface_hub/__pycache__/__init__.cpython-310.pyc\n./.venv/lib/python3.10/site-packages/huggingface_hub/hf_api.py: carbon footprint\n./.venv/lib/python3.10/site-packages/huggingface_hub/hf_api.py: If invalid\n./.venv/lib/python3.10/site-packages/huggingface_hub/repocard.py: >>> card\n./.venv/lib/python3.10/site-packages/huggingface_hub/repocard.py: The repo\nBinary file ./.venv/lib/p\n<redacted 15 repo-local output line(s)>",
+          "start_ns": 912301263886000,
+          "end_ns": 912305033783166,
+          "duration_ms": 3769.897166,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 2.567684,
+            "system_time_s": 0.434282,
+            "max_rss_bytes": 178520064,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "525b7ff2-3dbe-4e8e-ad50-de19c0739a27",
+      "timestamp_utc": "2026-03-28T21:33:18.889077+00:00",
+      "prompt": "Recursively list contents of the '/testdata/system' directory in a tree-like format\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-0.6B",
+      "dataset_name": "nl2bash",
+      "task_id": 2,
+      "run_id": "collect-0_6B-20260328T133144Z-nl2bash",
+      "total_duration_ms": 8261.105459,
+      "tool_span_count": 2,
+      "llm_step_count": 2,
+      "raw_file": "datasets/nl2bash_0_6B_20260328T133144Z.jsonl",
+      "source_row_idx": 1002,
+      "spans": [
+        {
+          "span_id": "ca0c158f-8043-42b5-84a4-95d9ecd015c0",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'ls -R /testdata/system'}",
+          "tool_output": "exit_code: 0\nstdout:\nfolder1\nfolder2\nfolder3\n\n/testdata/system/folder1:\nfile0.txt\nsubfolder1\nsubfolder2\n\n/testdata/system/folder1/subfolder1:\nfile0.txt\nfile1.sh\nfile2.py\n\n/testdata/system/folder1/subfolder2:\nfile0.log\n\n/testdata/system/folder2:\nfile0.txt\nfile1.c\nfile2.csv\nfile3.php\nsubfolder1\n\n/testdata/system/folder2/subfolder1:\nfile0.py\nfile1.py\nfile2.txt\n\n/testdata/system/folder3:\nfile0.log\nfile1.sh\nfile2.sh\nfile3.log",
+          "start_ns": 914847388373666,
+          "end_ns": 914847417345166,
+          "duration_ms": 28.9715,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.005553999999999837,
+            "system_time_s": 0.016388000000000014,
+            "max_rss_bytes": 238354432,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "c733b884-9173-4201-a6bf-e99cbb6e3026",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'The directory structure is as follows: \\n\\n- /testdata/system:\\n  folder1\\n  folder2\\n  folder3\\n\\n- folder1 contains:\\n  subfolder1\\n  subfolder2\\n  subfolder1/subfolder1\\n  subfolder1/subfolder2\\n  subfolder1/subfolder1/subfolder1\\n  subfolder1/subfolder1/subfolder2\\n  subfolder1/subfolder2\\n  subfolder1/subfolder3\\n  subfolder2/subfolder1\\n  subfolder2/subfolder2\\n  subfolder2/subfolder3\\n  subfolder3/subfolder1\\n  subfolder3/subfolder2\\n  subfolder3/subfolder3'}",
+          "tool_output": "The directory structure is as follows: \n\n- /testdata/system:\n  folder1\n  folder2\n  folder3\n\n- folder1 contains:\n  subfolder1\n  subfolder2\n  subfolder1/subfolder1\n  subfolder1/subfolder2\n  subfolder1/subfolder1/subfolder1\n  subfolder1/subfolder1/subfolder2\n  subfolder1/subfolder2\n  subfolder1/subfolder3\n  subfolder2/subfolder1\n  subfolder2/subfolder2\n  subfolder2/subfolder3\n  subfolder3/subfolder1\n  subfolder3/subfolder2\n  subfolder3/subfolder3",
+          "start_ns": 914851809001708,
+          "end_ns": 914851809006000,
+          "duration_ms": 0.004292,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 9.000000000147779e-06,
+            "system_time_s": 8.999999999981245e-06,
+            "max_rss_bytes": 238354432,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "72ff8572-efdb-40a6-bea3-75cdb73ee986",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1492,
+          "output_tokens": 336
+        },
+        {
+          "step_id": "12cfef99-891d-44e2-853b-b0fb271aa380",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1811,
+          "output_tokens": 422
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "2ff930d3-6a11-4735-a556-665b39fb1503",
+      "timestamp_utc": "2026-04-07T12:48:58.258177+00:00",
+      "prompt": "Recursively finds all files with any cased text \"Hello\" in the '/testdata/system/folder1' folder, and precedes found string with its number in file.\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "nl2bash",
+      "task_id": 0,
+      "run_id": "collect-1_7B-20260407-nl2bash",
+      "total_duration_ms": 559913.059625,
+      "tool_span_count": 6,
+      "llm_step_count": 11,
+      "raw_file": "datasets/nl2bash_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 1200,
+      "spans": [
+        {
+          "span_id": "ae2f6d6e-978a-408d-a418-cffdf199f030",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'counter=0; find /testdata/ -type f -exec bash -c \\'grep -i \"Hello\" {} | sed \"s/$/ \\\\\\\\$counter++/\"\\' \\\\'}",
+          "tool_output": "exit_code: 1\nstderr:\nfind: -exec: no terminating \";\" or \"+\"",
+          "start_ns": 9374641813375,
+          "end_ns": 9374660211041,
+          "duration_ms": 18.397666,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0027499999999999504,
+            "system_time_s": 0.012054999999999996,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "988b7a80-9ed0-46fe-9f36-5ceb9bc821f3",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'counter=0; find /testdata/system/folder1 -type f -exec bash -c \\'counter=0; grep -i \"Hello\" \"{}\" | sed \"s/$/ \\\\\\\\$counter++/\"\\' \\\\'}",
+          "tool_output": "exit_code: 1\nstderr:\nfind: -exec: no terminating \";\" or \"+\"",
+          "start_ns": 9511166521750,
+          "end_ns": 9511179921791,
+          "duration_ms": 13.400041,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0025660000000000092,
+            "system_time_s": 0.007726999999999984,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "f118f268-e868-4074-a691-dd1a981f3f87",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"counter=0; find /testdata/system/folder1 -type f -exec bash -c 'counter=0; grep -i 'Hello' {} | sed 's/$/ \\\\\\\\$counter++/'\"}",
+          "tool_output": "exit_code: 2\nstderr:\n/bin/sh: -c: line 0: unexpected EOF while looking for matching `''\n/bin/sh: -c: line 1: syntax error: unexpected end of file",
+          "start_ns": 9621273887625,
+          "end_ns": 9621283604166,
+          "duration_ms": 9.716541,
+          "exit_code": 2,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0019789999999999773,
+            "system_time_s": 0.006031999999999989,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "0b58bcd0-dee4-444c-b0eb-89e53e106e03",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'counter=0; find /testdata/system/folder1 -type f -exec bash -c \\'counter=0; grep -i \\'Hello\\' {} | sed \\'s/$/ \\\\\\\\$counter++/\\'\" \\\\\\n\\' _ {} \\\\'}",
+          "tool_output": "exit_code: 1\nstderr:\nfind: -exec: no terminating \";\" or \"+\"",
+          "start_ns": 9657148077250,
+          "end_ns": 9657164025375,
+          "duration_ms": 15.948125,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0027229999999999997,
+            "system_time_s": 0.010579999999999971,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "3248ebb2-326b-48e9-bca1-3ec25968893a",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'counter=0; find /testdata/system/folder1 -type f -exec bash -c \\'counter=0; grep -i \\'Hello\\' \"{}\" | sed \\'s/$/ \\\\\\\\$counter++/\\'\" \\\\\\n\\' _ {} +'}",
+          "tool_output": "exit_code: 1\nstderr:\nsed: 1: \"s/$/\": unterminated substitute in regular expression\ngrep: {}: No such file or directory",
+          "start_ns": 9711949187125,
+          "end_ns": 9711967183416,
+          "duration_ms": 17.996291,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.004535999999999946,
+            "system_time_s": 0.011507000000000031,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "ba098873-7337-4858-a038-d33462dfc801",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"counter=0; find /testdata/system/folder1 -type f -exec bash -c 'counter=0; grep -i 'Hello' {} | sed 's/$/ \\\\\\\\$counter++/'\"}",
+          "tool_output": "exit_code: 2\nstderr:\n/bin/sh: -c: line 0: unexpected EOF while looking for matching `''\n/bin/sh: -c: line 1: syntax error: unexpected end of file",
+          "start_ns": 9758918935833,
+          "end_ns": 9758927287375,
+          "duration_ms": 8.351542,
+          "exit_code": 2,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0018020000000000085,
+            "system_time_s": 0.004832999999999976,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "a0582006-4588-4999-95df-16a2b936e33d",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1528,
+          "output_tokens": 2795
+        },
+        {
+          "step_id": "b2b3614f-d2a0-4a0e-be01-a4afa026b84b",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1670,
+          "output_tokens": 5004
+        },
+        {
+          "step_id": "f0926d8a-64c9-41a1-aa3b-8d1b9d576122",
+          "step_number": 3,
+          "duration_ms": null,
+          "input_tokens": 1821,
+          "output_tokens": 4234
+        },
+        {
+          "step_id": "8f9373dc-88d8-4f44-8355-edb3b20a6b07",
+          "step_number": 4,
+          "duration_ms": null,
+          "input_tokens": 1991,
+          "output_tokens": 1647
+        },
+        {
+          "step_id": "6aa77a08-f0c4-4161-95eb-c9a86c63f5ef",
+          "step_number": 5,
+          "duration_ms": null,
+          "input_tokens": 2148,
+          "output_tokens": 2356
+        },
+        {
+          "step_id": "e87f2297-ee89-43da-b0c6-a66c6d1223d8",
+          "step_number": 6,
+          "duration_ms": null,
+          "input_tokens": 2320,
+          "output_tokens": 2058
+        },
+        {
+          "step_id": "10bd663f-e8d2-4b81-8e0e-10f548ea5ef0",
+          "step_number": 7,
+          "duration_ms": null,
+          "input_tokens": 2492,
+          "output_tokens": 2157
+        },
+        {
+          "step_id": "ab648180-bb61-4e83-a5bf-db6dde284f64",
+          "step_number": 8,
+          "duration_ms": null,
+          "input_tokens": 6899,
+          "output_tokens": 484
+        },
+        {
+          "step_id": "2550da84-db67-44d6-86cc-bca81b56734d",
+          "step_number": 9,
+          "duration_ms": null,
+          "input_tokens": 7960,
+          "output_tokens": 417
+        },
+        {
+          "step_id": "023b1b4a-779e-40e2-9a3c-0ef705214ef1",
+          "step_number": 10,
+          "duration_ms": null,
+          "input_tokens": 8887,
+          "output_tokens": 353
+        },
+        {
+          "step_id": "2a9f37c2-7df5-4b63-9ad0-b1ff10f57353",
+          "step_number": 11,
+          "duration_ms": null,
+          "input_tokens": 8387,
+          "output_tokens": 569
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "048b4ab268765f55b0d2fd8f18fee58955b97d5f"
+      }
+    },
+    {
+      "trace_id": "85f4513a-af6a-4bb9-b1ac-dd290613b85f",
+      "timestamp_utc": "2026-04-07T12:51:19.252378+00:00",
+      "prompt": "Recursively finds all files with whole word \"foo\" in the '/testdata/system', and precedes found string with its number in file.\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "nl2bash",
+      "task_id": 1,
+      "run_id": "collect-1_7B-20260407-nl2bash",
+      "total_duration_ms": 140995.762417,
+      "tool_span_count": 3,
+      "llm_step_count": 3,
+      "raw_file": "datasets/nl2bash_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 1201,
+      "spans": [
+        {
+          "span_id": "2a1562ba-da0f-4895-a3e7-6e34a65bbb40",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"grep -rR '\\x08foo\\x08' /testdata/\"}",
+          "tool_output": "exit_code: 1",
+          "start_ns": 9941015531458,
+          "end_ns": 9941036470250,
+          "duration_ms": 20.938792,
+          "exit_code": 1,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.00368500000000007,
+            "system_time_s": 0.010898999999999985,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "04dcf77b-1558-4d05-bd8b-0fa472d48efd",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': \"grep -rR '\\\\bfoo\\\\b' /testdata/ --line-number\"}",
+          "tool_output": "exit_code: 0\nstdout:\n/testdata/workspace/project1/file1.php:6:foo the over beta the\n/testdata/workspace/logs/file0.c:4:foo init fox lazy brown beta lazy\n/testdata/workspace/logs/file1.log:6:foo alpha delta fox\n/testdata/workspace/data/file0.py:6:foo the beta config\n/testdata/system/folder1/file0.txt:2:foo the fox dog\n/testdata/system/folder1/file0.txt:6:foo alpha gamma the fox jumps\n/testdata/system/folder1/subfolder2/file0.log:6:foo quick lazy jumps",
+          "start_ns": 9961011309000,
+          "end_ns": 9961031068041,
+          "duration_ms": 19.759041,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.003680000000000048,
+            "system_time_s": 0.01037099999999995,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "fa186791-0b17-4067-a116-5f6a0a7e1120",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': '/testdata/workspace/project1/file1.php:6:foo the over beta the\\n/testdata/workspace/logs/file0.c:4:foo init fox lazy brown beta lazy\\n/testdata/workspace/logs/file1.log:6:foo alpha delta fox\\n/testdata/workspace/data/file0.py:6:foo the beta config\\n/testdata/system/folder1/file0.txt:2:foo the fox dog\\n/testdata/system/folder1/file0.txt:6:foo alpha gamma the fox jumps\\n/testdata/system/folder1/subfolder2/file0.log:6:foo quick lazy jumps'}",
+          "tool_output": "/testdata/workspace/project1/file1.php:6:foo the over beta the\n/testdata/workspace/logs/file0.c:4:foo init fox lazy brown beta lazy\n/testdata/workspace/logs/file1.log:6:foo alpha delta fox\n/testdata/workspace/data/file0.py:6:foo the beta config\n/testdata/system/folder1/file0.txt:2:foo the fox dog\n/testdata/system/folder1/file0.txt:6:foo alpha gamma the fox jumps\n/testdata/system/folder1/subfolder2/file0.log:6:foo quick lazy jumps",
+          "start_ns": 10008301299750,
+          "end_ns": 10008301301166,
+          "duration_ms": 0.001416,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 2.9999999999752447e-06,
+            "system_time_s": 4.000000000004e-06,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "9c11e122-2fed-4e31-a9d8-63fd95a0e477",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1521,
+          "output_tokens": 3053
+        },
+        {
+          "step_id": "a7fe4e60-b52c-44e9-b9eb-6449a61a55f5",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1626,
+          "output_tokens": 987
+        },
+        {
+          "step_id": "1b33f92a-d55b-4516-b2bc-78d5aba2c069",
+          "step_number": 3,
+          "duration_ms": null,
+          "input_tokens": 1952,
+          "output_tokens": 2081
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "048b4ab268765f55b0d2fd8f18fee58955b97d5f"
+      }
+    },
+    {
+      "trace_id": "da7ab9e9-8dcf-42cf-9cb9-5c2308bce8b0",
+      "timestamp_utc": "2026-04-07T12:51:43.838083+00:00",
+      "prompt": "Recursively list contents of the '/testdata/system' directory in a tree-like format\n\nUse the bash tool to execute the command. The files are located under /testdata/.",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "nl2bash",
+      "task_id": 2,
+      "run_id": "collect-1_7B-20260407-nl2bash",
+      "total_duration_ms": 24584.538041,
+      "tool_span_count": 2,
+      "llm_step_count": 2,
+      "raw_file": "datasets/nl2bash_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 1202,
+      "spans": [
+        {
+          "span_id": "b6afbc54-ae54-4717-9cbd-3c5a19d48b41",
+          "type": "TOOL",
+          "tool_name": "bash",
+          "tool_input": "kwargs={'command': 'ls -R /testdata/system'}",
+          "tool_output": "exit_code: 0\nstdout:\nfolder1\nfolder2\nfolder3\n\n/testdata/system/folder1:\nfile0.txt\nsubfolder1\nsubfolder2\n\n/testdata/system/folder1/subfolder1:\nfile0.txt\nfile1.sh\nfile2.py\n\n/testdata/system/folder1/subfolder2:\nfile0.log\n\n/testdata/system/folder2:\nfile0.txt\nfile1.c\nfile2.csv\nfile3.php\nsubfolder1\n\n/testdata/system/folder2/subfolder1:\nfile0.py\nfile1.py\nfile2.txt\n\n/testdata/system/folder3:\nfile0.log\nfile1.sh\nfile2.sh\nfile3.log",
+          "start_ns": 10018052296875,
+          "end_ns": 10018067796916,
+          "duration_ms": 15.500041,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0026600000000000026,
+            "system_time_s": 0.00909999999999997,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "8431c8cb-5713-44fa-be8b-12557e7da101",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'folder1\\nfolder2\\nfolder3\\n\\n/testdata/system/folder1:\\n\\tfile0.txt\\n\\tsubfolder1\\n\\tsubfolder2\\n\\n/testdata/system/folder1/subfolder1:\\n\\tfile0.txt\\n\\tfile1.sh\\n\\tfile2.py\\n\\n/testdata/system/folder1/subfolder2:\\n\\tfile0.log\\n\\n/testdata/system/folder2:\\n\\tfile0.txt\\n\\tfile1.c\\n\\tfile2.csv\\n\\tfile3.php\\n\\tsubfolder1\\n\\n/testdata/system/folder2/subfolder1:\\n\\tfile0.py\\n\\tfile1.py\\n\\tfile2.txt\\n\\n/testdata/system/folder3:\\n\\tfile0.log\\n\\tfile1.sh\\n\\tfile2.sh\\n\\tfile3.log'}",
+          "tool_output": "folder1\nfolder2\nfolder3\n\n/testdata/system/folder1:\n\tfile0.txt\n\tsubfolder1\n\tsubfolder2\n\n/testdata/system/folder1/subfolder1:\n\tfile0.txt\n\tfile1.sh\n\tfile2.py\n\n/testdata/system/folder1/subfolder2:\n\tfile0.log\n\n/testdata/system/folder2:\n\tfile0.txt\n\tfile1.c\n\tfile2.csv\n\tfile3.php\n\tsubfolder1\n\n/testdata/system/folder2/subfolder1:\n\tfile0.py\n\tfile1.py\n\tfile2.txt\n\n/testdata/system/folder3:\n\tfile0.log\n\tfile1.sh\n\tfile2.sh\n\tfile3.log",
+          "start_ns": 10032886636250,
+          "end_ns": 10032886637583,
+          "duration_ms": 0.001333,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 2.0000000000575113e-06,
+            "system_time_s": 2.000000000002e-06,
+            "max_rss_bytes": 170196992,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "21201166-87a3-4a02-9e15-f579c32bbba1",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1510,
+          "output_tokens": 512
+        },
+        {
+          "step_id": "f27a0db3-9d46-48ed-aa17-d1ff21d7dc1a",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1827,
+          "output_tokens": 733
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "048b4ab268765f55b0d2fd8f18fee58955b97d5f"
+      }
+    },
+    {
+      "trace_id": "ae3d3018-4652-4fac-ac37-e73680709258",
+      "timestamp_utc": "2026-04-03T21:15:04.730261+00:00",
+      "prompt": "Write a python function to remove first and last occurrence of a given character from the string.\n\nTest cases:\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "mbpp",
+      "task_id": 11,
+      "run_id": "collect-1_7B-20260403T211347Z-mbpp",
+      "total_duration_ms": 73359.991667,
+      "tool_span_count": 1,
+      "llm_step_count": 1,
+      "raw_file": "datasets/mbpp_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 500,
+      "spans": [
+        {
+          "span_id": "8c074fa6-86cc-4a7c-b4c5-f0762c978c12",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'def remove_Occ(s, char):\\n    first_idx = s.find(char)\\n    last_idx = s.rfind(char)\\n    if first_idx == -1 or last_idx == -1:\\n        return s\\n    return s[:first_idx] + s[first_idx+1:last_idx] + s[last_idx+1:]'}",
+          "tool_output": "def remove_Occ(s, char):\n    first_idx = s.find(char)\n    last_idx = s.rfind(char)\n    if first_idx == -1 or last_idx == -1:\n        return s\n    return s[:first_idx] + s[first_idx+1:last_idx] + s[last_idx+1:]",
+          "start_ns": 1074850058888833,
+          "end_ns": 1074850058891541,
+          "duration_ms": 0.002708,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 2.9999999999752447e-06,
+            "system_time_s": 6.0000000000060005e-06,
+            "max_rss_bytes": 168558592,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "561b2206-20b5-4cbf-80fa-a1b369c33d4b",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1490,
+          "output_tokens": 3071
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "2a9cece9-54f1-4667-9212-92aa16f69035",
+      "timestamp_utc": "2026-04-03T21:15:35.491571+00:00",
+      "prompt": "Write a function to sort a given matrix in ascending order according to the sum of its rows.\n\nTest cases:\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\nassert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "mbpp",
+      "task_id": 12,
+      "run_id": "collect-1_7B-20260403T211347Z-mbpp",
+      "total_duration_ms": 30760.982542,
+      "tool_span_count": 2,
+      "llm_step_count": 2,
+      "raw_file": "datasets/mbpp_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 501,
+      "spans": [
+        {
+          "span_id": "afef9187-564a-4d7e-aa4a-03ac68d50dc2",
+          "type": "TOOL",
+          "tool_name": "python_interpreter",
+          "tool_input": "kwargs={'code': 'def sort_matrix(matrix):\\n    row_sums = [sum(row) for row in matrix]\\n    sorted_matrix = sorted(matrix, key=lambda x: sum(x))\\n    return sorted_matrix\\n\\n# Test cases\\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]]) == [[1, 1, 1], [1, 2, 3], [2, 4, 5]]\\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]]) == [[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\\nassert sort_matrix([[5, 8, 9], [6, 4, 3], [2, 1, 4]]) == [[2, 1, 4], [6, 4, 3], [5, 8, 9]]'}",
+          "tool_output": "Stdout:\n\nOutput: None",
+          "start_ns": 1074868539239416,
+          "end_ns": 1074868540344458,
+          "duration_ms": 1.105042,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 0.0008739999999999304,
+            "system_time_s": 0.0002510000000000012,
+            "max_rss_bytes": 168558592,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        },
+        {
+          "span_id": "5fdb5819-091d-4d7b-ad93-6a8b71417fca",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'def sort_matrix(matrix):\\n    row_sums = [sum(row) for row in matrix]\\n    sorted_matrix = sorted(matrix, key=lambda x: sum(x))\\n    return sorted_matrix\\n\\n# Test cases\\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]]) == [[1, 1, 1], [1, 2, 3], [2, 4, 5]]\\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]]) == [[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\\nassert sort_matrix([[5, 8, 9], [6, 4, 3], [2, 1, 4]]) == [[2, 1, 4], [6, 4, 3], [5, 8, 9]]'}",
+          "tool_output": "def sort_matrix(matrix):\n    row_sums = [sum(row) for row in matrix]\n    sorted_matrix = sorted(matrix, key=lambda x: sum(x))\n    return sorted_matrix\n\n# Test cases\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]]) == [[1, 1, 1], [1, 2, 3], [2, 4, 5]]\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]]) == [[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\nassert sort_matrix([[5, 8, 9], [6, 4, 3], [2, 1, 4]]) == [[2, 1, 4], [6, 4, 3], [5, 8, 9]]",
+          "start_ns": 1074880820305875,
+          "end_ns": 1074880820307208,
+          "duration_ms": 0.001333,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 2.9999999999752447e-06,
+            "system_time_s": 4.000000000004e-06,
+            "max_rss_bytes": 168558592,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "9496c792-2557-4201-b243-e66e5b128e5f",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1617,
+          "output_tokens": 957
+        },
+        {
+          "step_id": "6ea922e7-a6f5-4157-a483-46ac97cec0b6",
+          "step_number": 2,
+          "duration_ms": null,
+          "input_tokens": 1922,
+          "output_tokens": 613
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    },
+    {
+      "trace_id": "c7986674-fa1b-4e2f-83c6-9c9438df1cda",
+      "timestamp_utc": "2026-04-03T21:16:30.127963+00:00",
+      "prompt": "Write a function to count the most common words in a dictionary.\n\nTest cases:\nassert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]\nassert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]\nassert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]",
+      "model": "Qwen/Qwen3-1.7B",
+      "dataset_name": "mbpp",
+      "task_id": 13,
+      "run_id": "collect-1_7B-20260403T211347Z-mbpp",
+      "total_duration_ms": 54636.437875,
+      "tool_span_count": 1,
+      "llm_step_count": 1,
+      "raw_file": "datasets/mbpp_1_7B_20260403T211347Z.jsonl",
+      "source_row_idx": 502,
+      "spans": [
+        {
+          "span_id": "df4a90d4-61fe-46f9-a85b-a16e517a4f03",
+          "type": "TOOL",
+          "tool_name": "final_answer",
+          "tool_input": "kwargs={'answer': 'def count_common(words):\\n    counts = {}\\n    for word in words:\\n        counts[word] = counts.get(word, 0) + 1\\n    sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))\\n    return sorted_counts'}",
+          "tool_output": "def count_common(words):\n    counts = {}\n    for word in words:\n        counts[word] = counts.get(word, 0) + 1\n    sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))\n    return sorted_counts",
+          "start_ns": 1074935457546791,
+          "end_ns": 1074935457548041,
+          "duration_ms": 0.00125,
+          "exit_code": 0,
+          "parent_span_id": null,
+          "telemetry": {
+            "user_time_s": 1.999999999946489e-06,
+            "system_time_s": 4.000000000004e-06,
+            "max_rss_bytes": 168558592,
+            "read_bytes": 0,
+            "write_bytes": 0
+          }
+        }
+      ],
+      "llm_steps": [
+        {
+          "step_id": "913e0355-9389-4ad7-aeda-5d6ada770972",
+          "step_number": 1,
+          "duration_ms": null,
+          "input_tokens": 1641,
+          "output_tokens": 2376
+        }
+      ],
+      "metadata": {
+        "schema_version": "0.3.0",
+        "collector_version": "0.3.0",
+        "platform": "darwin-arm64",
+        "git_commit": "d4f51df6f85a78b33a9841e8379994b659b0f497"
+      }
+    }
+  ]
+}

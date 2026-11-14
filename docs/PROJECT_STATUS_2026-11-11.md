@@ -1,3 +1,5 @@
+> **AVISO HISTÓRICO — 2026-11-14:** o conteúdo abaixo representa o estado em 11/11/2026, **não** o estado atual. As PRs #37, #39, #42, #44, #46 e #47 foram integradas à `main` em 11–13/11; a PR #41 permanece aberta. O estado atual de planejamento está em [LCP-OBS-001](../SDD/spec/LCP-OBS-001/spec.md) e [ADR-004](architecture/ADR-004-import-first-agent-observability.md). Não executar comandos históricos abaixo sem revisar branch e contexto.
+
 # Lab Control Panel — Estado do projeto e handoff
 
 **Data de corte:** 2026-11-11  

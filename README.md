@@ -28,3 +28,9 @@ npx playwright test --config playwright.config.ts
 ```
 
 Não use docker compose down -v se desejar manter o volume e seus resultados.
+
+## Próxima entrega (planejamento, ainda não implementada)
+
+**LCP-OBS-001:** observabilidade de execuções agênticas via importação local de traces, com timeline, métricas e replay de eventos. Contrato e etapas em [SDD/spec/LCP-OBS-001](SDD/spec/LCP-OBS-001/spec.md); [ADR-004](docs/architecture/ADR-004-import-first-agent-observability.md). Os documentos são DRAFT: a interface de observabilidade **ainda não está pronta**.
+
+**Operação:** Codex pode usar terminal/Git/GitHub CLI para inspecionar e trabalhar no código, mas instalações/downloads/venv, testes, builds e containers são comandados pelo operador. As instruções de teste acima destinam-se a execução manual ou CI explicitamente autorizada.

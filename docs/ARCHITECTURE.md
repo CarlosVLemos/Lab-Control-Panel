@@ -1,18 +1,20 @@
-# Arquitetura
+# Arquitetura — estado atual e visão futura
 
-Monólito modular com API FastAPI, PostgreSQL para estado/auditoria e worker separado para execuções longas. Adaptadores de workload implementam `prepare → run → collect`; avaliadores são independentes e retornam evidências tipadas. O Policy Engine emite `PASS`, `FAIL`, `INCONCLUSIVE` ou `MANUAL_REVIEW`. Code Gate controla aprovação de mudanças; Release Controller controla canary e rollback.
+## Implementado na main (14/11/2026)
+- Vue 3 / TypeScript / Vite: demonstração Response e visualização estática do CODE-001.
+- FastAPI: `GET /health`, `POST /api/demo/experiments` e `GET /api/demo/experiments/{id}`.
+- PostgreSQL 16 e Alembic: sete tabelas, usadas pelo fluxo Response sintético.
+- Módulos offline CODE-001/RAG-001, e piloto RAG remoto offline-first. Não houve piloto pago real.
 
 ```text
-Vue UI -> Control API -> PostgreSQL
-                 | 
-                 +-> Redis/RQ -> Worker -> Response / Task / Code
-                                            | 
-                                            v
-                                       Evaluation Engine
-                                            |
-                                       Policy Engine
-                                         /     \
-                                   Code Gate   Release Controller
+[Vue dashboard] → [FastAPI demo] → [PostgreSQL]
+       └───── [CODE-001 fixture estática]
+[CLI CODE-001] → artefatos locais
+[CLI RAG-001] → offline / remoto opt-in (não executado remotamente)
 ```
 
-**Decisão:** infraestrutura pequena primeiro. Evoluir para OpenTelemetry, Langfuse e Argo somente depois do fluxo ponta a ponta funcionar. O executor de código do MVP não recebe acesso irrestrito a shell/rede.
+## Próximo recorte aprovado (decisão de produto, implementação pendente)
+**LCP-OBS-001**: `arquivo local → parser seguro → eventos normalizados → métricas → timeline/gráfico/replay Vue`. Sem upload, endpoint novo, tabela nova ou execução de trace. Ver [ADR-004](architecture/ADR-004-import-first-agent-observability.md).
+
+## Visão histórica fora do MVP
+O diagrama original inclui worker Redis/RQ, Workloads Response/Task/Code, Evaluation Engine, Policy Engine, Code Gate e Release Controller. **Essas peças não estão implementadas como pipeline integral.** Não usar o diagrama como evidência de capacidades existentes. OpenTelemetry completo, Langfuse, Kubernetes, canary e produção são possibilidades futuras, não dependências para LCP-OBS-001.
