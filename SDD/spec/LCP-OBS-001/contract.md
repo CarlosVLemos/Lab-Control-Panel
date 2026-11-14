@@ -38,7 +38,7 @@ Um arquivo JSON UTF-8 com objeto raiz (JSONL apenas para o adaptador externo que
 A amostra acima é uma **fixture ilustrativa**, não resultado medido. Os valores desconhecidos são `null`. Não exigir timestamps, custo, modelo ou uso para aceitar observação parcial. Cada evento precisa de identidade e sequência; `kind` proposto: `model`, `tool`, `message`, `system`; `status`: `success`, `error`, `unknown`.
 
 ## 2. Uso e confiança
-- `usage` por evento é opcional e descreve **somente aquela operação**: `input_tokens: number|null`, `output_tokens: number|null`, `duration_ms: number|null`, `cost_usd: string|null`.
+- `usage` por evento é opcional e descreve **somente aquela operação**: `input_tokens: number|null`, `output_tokens: number|null`, `duration_ms: number|null`, `cost_usd: string|null`. Contagem de tokens não deve ser projetada em segundos quando só existe `step_number`.
 - `source.kind` diferencia `trace`, `self_report`, `fixture`. `reference` não implica autenticação. A UI nomeia os dados `reported`, `derived`, `estimated` ou `unavailable`.
 - A soma de uso só é permitida quando não há sobreposição/cumulatividade ambígua; campos ambíguos ficam `unavailable` com explicação. Tempo de execução total deriva do intervalo da execução, não da soma das durações de eventos.
 - USD é opcional: preservar tarifa e origem quando uma estimativa existir; sem referência tarifária não gerar custo estimado automaticamente.
@@ -46,8 +46,10 @@ A amostra acima é uma **fixture ilustrativa**, não resultado medido. Os valore
 ## 3. Normalização interna
 Representação somente leitura com `runId`, `sourceKind`, `events[]`, `summary`, `warnings[]`. As linhas do replay são formadas por eventos **observados ou autorrelatados**, nunca invocados no sistema.
 
-## 4. Parser externo
-O adaptador externo somente será congelado após visualizar esquema/semântica e amostra reais, campos de tokens, timestamps, spans, pais/filhos e licença. Implementar **somente** o subconjunto confirmado, não suportar JSONL por adivinhação.
+## 4. Parser externo — AgentTrace
+Fonte **selecionada para o primeiro adaptador**: [AgentTrace](source-agenttrace.md), com campos verificados no coletor público. O adaptador será congelado apenas após receber e inspecionar uma linha real sanitizada. A entrada da primeira entrega é um **trace por arquivo**, mesmo quando origem externa usa JSONL; arquivo com múltiplas linhas deve mostrar erro de escopo ou seleção explícita, não ignorar execuções. O LCP não executa código de trace.
+
+**Nuance temporal:** spans de ferramentas têm start_ns/end_ns monotônicos; etapas LLM têm step_number e duração, mas não têm início/fim. Gráficos de tokens são por etapa ordinal; não atribuir tokens a um instante UTC. Duração total reportada não implica alinhamento entre classes de eventos. `reasoning_content` deve ser descartado antes da normalização/renderização.
 
 ## 5. Segurança e limites
 - Proposta inicial: arquivo até 5 MiB e no máximo 10.000 eventos; excedentes resultam em erro claro, não truncamento silencioso de somas.

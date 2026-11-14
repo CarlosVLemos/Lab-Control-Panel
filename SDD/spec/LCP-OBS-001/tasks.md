@@ -4,7 +4,7 @@
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)
-- Revisar ADR-004, spec, contract, tests; confirmar amostra real externa e licença. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
+- Revisar ADR-004, spec, contract, tests e [source-agenttrace.md](source-agenttrace.md); fonte AgentTrace selecionada, mas **a amostra real sanitizada depende do operador**. O Codex pode inspecionar Git/GitHub CLI e arquivos; não baixar dataset.
 - O operador fornece dependências, arquivos e ambiente. Não fazer `pip install`, `npm ci`, `venv`, downloads, builds, `pytest`, `vitest`, `playwright` ou Docker por iniciativa do Codex.
 - Marcar `FROZEN` somente após aprovação humana; não iniciar implementação enquanto DRAFT.
 
@@ -14,13 +14,13 @@
 **Aceite:** contrato passa as verificações de [tests.md](tests.md), usando execução manual do operador no final da etapa; retornar PASS/FAIL/NOT_RUN conforme observado.
 
 ## B — Adaptador externo real
-**Pré-condição:** operador disponibiliza amostra, campos e licença; contrato externo aprovado.
+**Pré-condição:** operador disponibiliza uma linha real sanitizada do dataset AgentTrace, confirma atribuição/licença e aprova o mapeamento em [source-agenttrace.md](source-agenttrace.md).
 **Escopo:** um adaptador único externo que converte a amostra em LCP v1 sem inventar timestamps/tokens/ferramentas.
 **Entregáveis:** código, amostra mínima sanitizada permitida, mapeamento campo-a-campo, testes de divergências.
 **Aceite:** totais e ordem conferidos ao arquivo fornecido; desconhecidos continuam nulos. Caso amostra não esteja disponível, etapa fica BLOCKED — não baixar substituto silenciosamente.
 
 ## C — Métricas de observabilidade
-**Escopo:** contagens de eventos/chamadas/erros, duração total observável, uso por chamada, tokens acumulados discretos, agregação ciente de parent/child e cumulatividade.
+**Escopo:** contagens de eventos/chamadas/erros, duração total observável, uso por chamada, tokens acumulados **por etapa ordinal** (sem timestamps imaginados), agregação ciente de parent/child e cumulatividade.
 **Entregáveis:** funções puras TS e testes determinísticos.
 **Aceite:** fixtures completas/incompletas/sobrepostas, não duplicação, sem inventar custo/tempo; bateria de testes aplicada **pelo operador ao final**.
 

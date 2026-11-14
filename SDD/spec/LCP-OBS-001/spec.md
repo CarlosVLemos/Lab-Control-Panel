@@ -34,12 +34,12 @@ O usuário seleciona um trace local de execução agêntica, visualiza a sequên
 Nova área/tab `Observability` na interface existente, preservando `Response` e `Code Evaluation`. Elementos:
 1. Importar arquivo local com limite explícito de tamanho; estados vazio/carregando/inválido/parcial.
 2. Resumo: tipo de fonte, agentes/modelos reportados, duração, eventos, chamadas de ferramentas, erros, tokens (input/output), custo opcional, cobertura de observação.
-3. Consumo temporal: série **em degraus** com pontos só nos eventos com uso reportado; lacunas identificadas, não interpoladas. Se sem consumo, exibir vazio informativo.
-4. Replay: lista ordenada com reprodução baseada em eventos (Play/Pause/Anterior/Próximo), seleção e detalhe; eventos sem tempo continuam navegáveis, sem inventar intervalos.
+3. Consumo **por etapa registrada**: série em degraus/cumulativa de tokens de LLMStep, sem inferir timestamp de geração. Eixo de tempo só quando os eventos possuem horários comparáveis. Lacunas identificadas; sem consumo, exibir estado vazio.
+4. Replay: lista ordenada com reprodução baseada em eventos (Play/Pause/Anterior/Próximo), seleção e detalhe; ferramentas com spans monotônicos podem mostrar duração relativa; LLMSteps sem timestamps são ordinalmente navegáveis, sem inventar intervalos ou alinhamento temporal entre faixas.
 5. Detalhe: tipo, identificador, timestamps, status, métricas, fonte, dados truncados/sanitizados; não renderizar HTML/JS de entrada.
 
 ## 6. Dados e exemplos
-- Importar uma amostra *real*, pequena e legalmente reutilizável de AgentTrace ou alternativa equivalente, **somente depois** que o operador forneça arquivo/local e licença; não afirmar que existe amostra já baixada.
+- Fonte externa inicial **selecionada**: AgentTrace (NL2Bash/Qwen3-0.6B); ver [mapeamento e limites](source-agenttrace.md). Uma linha real ainda depende de fornecimento, sanitização e revisão pelo operador. Não afirmar que existe amostra já baixada.
 - Exemplo sintético próprio deve ser rotulado `fixture` e jamais descrito como execução real. Criar caso completo, parcial, faltando timestamps, faltando token, tokens cumulativos/incrementais, spans sobrepostos, erros, eventos sem outcome, campo desconhecido, tamanho excedido e JSON malformado.
 - Preservar CODE-001 existente como experiência separada. Nenhuma alteração em hashes, fixtures e contratos congelados do RAG para facilitar LCP-OBS-001.
 

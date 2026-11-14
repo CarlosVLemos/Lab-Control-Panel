@@ -12,7 +12,12 @@
 | E01 | B | Amostra externa com spans e ferramentas | Mapeamento reproduzível; IDs, tipos e status corretos |
 | E02 | B | Formato externo sem uso/erro/timestamps | Mantém desconhecido; sem extrapolação |
 | E03 | B | Campo incompatível/versão não suportada | Falha clara ou parcial explicitamente rotulada |
-| M01 | C | Duas chamadas com uso incremental | Soma por operação; série em degraus nos eventos medidos |
+| E04 | B | AgentTrace LLMStep apenas com step_number e tokens | Gráfico por etapa ordinal; nenhuma posição UTC inventada |
+| E05 | B | AgentTrace TOOL start_ns/end_ns | Durações e posições relativas válidas entre ferramentas da mesma execução; não converter ns monotônico em data UTC |
+| E06 | B | tool_calls do modelo sem span executado correspondente | Não contar como ferramenta executada |
+| E07 | B | reasoning_content, tool outputs e mensagens potencialmente privadas | Descartar reasoning_content; dados sensíveis fora das fixtures públicas; renderização sem interpretação de instruções |
+| E08 | B | JSONL com vários traces em arquivo | Não escolher primeiro silenciosamente; sinalizar limitação/seleção explícita |
+| M01 | C | Duas chamadas com uso incremental | Soma por operação; série em degraus nos **passos conhecidos**; eixo temporal só com timestamps comparáveis |
 | M02 | C | Totais cumulativos e spans pai/filho | Sem dupla contagem; ambiguidade exposta |
 | M03 | C | Eventos sem tempo, sobrepostos, falha sem duração | Não somar durations para criar tempo total; estados corretos |
 | M04 | C | Custo ausente ou modelo/tarifa não confirmados | Null; nunca custo artificial 0 USD |
