@@ -89,9 +89,84 @@ describe('LCP Evidence v1 parser and normalizer', () => {
       parentId: null,
       startedAt: null,
       endedAt: null,
+      position: null,
       usage: null,
       detail: null,
     })
+  })
+
+  it('E09 accepts a present null agent name without substituting the model', () => {
+    const result = parse(minimalEnvelope({ agent: { name: null, model: 'reported-model' } }))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.agent).toEqual({ name: null, model: 'reported-model' })
+  })
+
+  it('E09 rejects an absent or empty agent name', () => {
+    const absent = parse(minimalEnvelope({ agent: { model: 'reported-model' } }))
+    const empty = parse(minimalEnvelope({ agent: { name: '' } }))
+
+    expect(errorCodes(absent)).toContain('REQUIRED_NULLABLE_STRING')
+    expect(errorCodes(empty)).toContain('REQUIRED_NULLABLE_STRING')
+  })
+
+  it('E09 normalizes ordinal and monotonic positions without inventing timestamps', () => {
+    const result = parse(minimalEnvelope({
+      events: [
+        minimalEvent({
+          id: 'model-1',
+          seq: 1,
+          kind: 'model',
+          position: { basis: 'ordinal', lane: 'llm_step', ordinal: 2 },
+        }),
+        minimalEvent({
+          id: 'tool-1',
+          seq: 2,
+          kind: 'tool',
+          position: { basis: 'monotonic_ns', lane: 'span', start_ns: 120, end_ns: 190 },
+        }),
+      ],
+    }))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.events[0].position).toEqual({ basis: 'ordinal', lane: 'llm_step', ordinal: 2 })
+    expect(result.value.events[1].position).toEqual({ basis: 'monotonic_ns', lane: 'span', startNs: 120, endNs: 190 })
+    expect(result.value.events.every((event) => event.startedAt === null && event.endedAt === null)).toBe(true)
+  })
+
+  it('E10 accepts MAX_SAFE_INTEGER and rejects unsafe or reversed monotonic positions', () => {
+    const accepted = parse(minimalEnvelope({ events: [minimalEvent({
+      position: {
+        basis: 'monotonic_ns',
+        lane: 'span',
+        start_ns: Number.MAX_SAFE_INTEGER,
+        end_ns: Number.MAX_SAFE_INTEGER,
+      },
+    })] }))
+    const unsafe = parse(minimalEnvelope({ events: [minimalEvent({
+      position: { basis: 'monotonic_ns', lane: 'span', start_ns: 0, end_ns: Number.MAX_SAFE_INTEGER + 1 },
+    })] }))
+    const reversed = parse(minimalEnvelope({ events: [minimalEvent({
+      position: { basis: 'monotonic_ns', lane: 'span', start_ns: 2, end_ns: 1 },
+    })] }))
+
+    expect(accepted.ok).toBe(true)
+    expect(errorCodes(unsafe)).toContain('INVALID_POSITION_END')
+    expect(errorCodes(reversed)).toContain('INVALID_POSITION_INTERVAL')
+  })
+
+  it('E09 rejects invalid ordinal positions and mismatched lanes', () => {
+    const ordinal = parse(minimalEnvelope({ events: [minimalEvent({
+      position: { basis: 'ordinal', lane: 'llm_step', ordinal: 0 },
+    })] }))
+    const lane = parse(minimalEnvelope({ events: [minimalEvent({
+      position: { basis: 'monotonic_ns', lane: 'llm_step', start_ns: 1, end_ns: 2 },
+    })] }))
+
+    expect(errorCodes(ordinal)).toContain('INVALID_POSITION_ORDINAL')
+    expect(errorCodes(lane)).toContain('INVALID_POSITION_LANE')
   })
 
   it('C03 rejects malformed JSON before producing a normalized run', () => {

@@ -14,9 +14,22 @@ export interface ObservationSource {
 }
 
 export interface ObservationAgent {
-  readonly name: string
+  readonly name: string | null
   readonly model: string | null
 }
+
+export type ObservationPosition =
+  | {
+      readonly basis: 'ordinal'
+      readonly lane: 'llm_step'
+      readonly ordinal: number
+    }
+  | {
+      readonly basis: 'monotonic_ns'
+      readonly lane: 'span'
+      readonly startNs: number
+      readonly endNs: number
+    }
 
 export interface ObservationUsage {
   readonly inputTokens: number | null
@@ -34,6 +47,7 @@ export interface ObservationEvent {
   readonly startedAt: string | null
   readonly endedAt: string | null
   readonly status: ObservationEventStatus
+  readonly position: ObservationPosition | null
   readonly usage: ObservationUsage | null
   readonly detail: string | null
 }
@@ -112,6 +126,25 @@ function nullableString(
     return null
   }
   return value
+}
+
+function requiredNullableString(
+  record: Record<string, unknown>,
+  key: string,
+  path: string,
+  errors: ValidationIssue[],
+): { readonly valid: boolean; readonly value: string | null } {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) {
+    errors.push(error('REQUIRED_NULLABLE_STRING', path, 'Expected a present field containing a non-empty string or null.'))
+    return { valid: false, value: null }
+  }
+  const value = record[key]
+  if (value === null) return { valid: true, value: null }
+  if (typeof value !== 'string' || value.length === 0) {
+    errors.push(error('REQUIRED_NULLABLE_STRING', path, 'Expected a non-empty string or null.'))
+    return { valid: false, value: null }
+  }
+  return { valid: true, value }
 }
 
 function nonNegativeNumber(
@@ -203,6 +236,51 @@ function parseUsage(value: unknown, path: string, errors: ValidationIssue[]): Ob
   return { inputTokens, outputTokens, durationMs, costUsd }
 }
 
+function parsePosition(value: unknown, path: string, errors: ValidationIssue[]): ObservationPosition | null {
+  if (value === undefined || value === null) return null
+  if (!isRecord(value)) {
+    errors.push(error('INVALID_POSITION', path, 'Expected a position object or null.'))
+    return null
+  }
+
+  if (value.basis === 'ordinal') {
+    if (value.lane !== 'llm_step') {
+      errors.push(error('INVALID_POSITION_LANE', `${path}.lane`, 'Ordinal positions require the llm_step lane.'))
+      return null
+    }
+    if (typeof value.ordinal !== 'number' || !Number.isSafeInteger(value.ordinal) || value.ordinal <= 0) {
+      errors.push(error('INVALID_POSITION_ORDINAL', `${path}.ordinal`, 'Expected a positive safe integer.'))
+      return null
+    }
+    return { basis: 'ordinal', lane: 'llm_step', ordinal: value.ordinal }
+  }
+
+  if (value.basis === 'monotonic_ns') {
+    if (value.lane !== 'span') {
+      errors.push(error('INVALID_POSITION_LANE', `${path}.lane`, 'Monotonic positions require the span lane.'))
+      return null
+    }
+    const startNs = value.start_ns
+    const endNs = value.end_ns
+    if (typeof startNs !== 'number' || !Number.isSafeInteger(startNs) || startNs < 0) {
+      errors.push(error('INVALID_POSITION_START', `${path}.start_ns`, 'Expected a non-negative safe integer.'))
+      return null
+    }
+    if (typeof endNs !== 'number' || !Number.isSafeInteger(endNs) || endNs < 0) {
+      errors.push(error('INVALID_POSITION_END', `${path}.end_ns`, 'Expected a non-negative safe integer.'))
+      return null
+    }
+    if (endNs < startNs) {
+      errors.push(error('INVALID_POSITION_INTERVAL', `${path}.end_ns`, 'Monotonic position end must not precede start.'))
+      return null
+    }
+    return { basis: 'monotonic_ns', lane: 'span', startNs, endNs }
+  }
+
+  errors.push(error('INVALID_POSITION_BASIS', `${path}.basis`, 'Expected ordinal or monotonic_ns.'))
+  return null
+}
+
 function parseEvent(value: unknown, index: number, errors: ValidationIssue[]): IndexedObservationEvent | null {
   const path = `$.events[${index}]`
   if (!isRecord(value)) {
@@ -224,12 +302,13 @@ function parseEvent(value: unknown, index: number, errors: ValidationIssue[]): I
   const parentId = nullableString(value, 'parent_id', `${path}.parent_id`, errors)
   const startedAt = nullableTimestamp(value, 'started_at', `${path}.started_at`, errors)
   const endedAt = nullableTimestamp(value, 'ended_at', `${path}.ended_at`, errors)
+  const position = parsePosition(value.position, `${path}.position`, errors)
   const usage = parseUsage(value.usage, `${path}.usage`, errors)
   const detail = nullableString(value, 'detail', `${path}.detail`, errors)
 
   if (id === null || seq === null || kind === null || name === null || status === null) return null
   return {
-    event: { id, parentId, seq, kind, name, startedAt, endedAt, status, usage, detail },
+    event: { id, parentId, seq, kind, name, startedAt, endedAt, status, position, usage, detail },
     sourceIndex: index,
   }
 }
@@ -369,9 +448,9 @@ export function parseLcpObservation(input: string): ParseResult {
   if (!isRecord(rawAgent)) {
     errors.push(error('REQUIRED_AGENT', '$.agent', 'Expected an agent object.'))
   } else {
-    const name = requiredString(rawAgent, 'name', '$.agent.name', errors)
+    const parsedName = requiredNullableString(rawAgent, 'name', '$.agent.name', errors)
     const model = nullableString(rawAgent, 'model', '$.agent.model', errors)
-    if (name !== null) agent = { name, model }
+    if (parsedName.valid) agent = { name: parsedName.value, model }
   }
 
   const startedAt = nullableTimestamp(parsed, 'started_at', '$.started_at', errors)

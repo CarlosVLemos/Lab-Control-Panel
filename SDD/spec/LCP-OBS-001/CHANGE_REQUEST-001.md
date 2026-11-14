@@ -1,6 +1,6 @@
 # CR-001 — Delimitação de `summary` por etapa
 
-**Estado:** PROPOSTA — aprovação humana pendente.
+**Estado:** APPROVED · **Aprovação humana:** 2026-11-14, registrada em `APPROVALS_2026-11-14.md`.
 **Afeta:** `contract.md`, seção 3 — Normalização interna.
 **Não autoriza:** implementação da Etapa C, agregações, indicadores, Etapa B ou alteração do envelope JSON v1.
 
@@ -23,4 +23,4 @@ Substituir a primeira frase da seção 3 por:
 
 ## Gate
 
-Até aprovação humana, esta Change Request não modifica o contrato FROZEN. Rejeição ou ajuste da proposta exige nova decisão sobre a forma obrigatória de `summary` antes do merge da Etapa A.
+Aprovada para integrar o contrato FROZEN: `summary` não faz parte das Etapas A ou B. Sua forma obrigatória permanece sujeita a contrato, testes e gate próprios antes da Etapa C.
