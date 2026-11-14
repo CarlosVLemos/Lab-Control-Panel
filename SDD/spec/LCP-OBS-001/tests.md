@@ -40,6 +40,12 @@
 | U02 | D | Play/Pause/Anterior/Próximo e seleção | Estado coerente; sem eventos ou tempos simulados |
 | U03 | D | Sem consumo ou trace parcial | Gráfico vazio informativo e lacunas visíveis |
 | U04 | D | Dados hostis renderizados na UI | Sem execução de JS/HTML, sem envio ao backend |
+| U05 | D | LCP self_report sem posição vs AgentTrace com duas faixas | Rótulo de autorrelato; ordem declarada e faixas LLM/spans independentes |
+| U06 | D | Lacuna em etapa LLM, cobertura parcial, custo ausente | Não conectar gráfico através de null, cobertura e custo indisponível visíveis |
+| U07 | D | Troca de arquivo/faixa durante Play/Pause e componente desmontado | Cancelar timers/seleção antiga; nenhuma reexecução |
+| U08 | D | Trace de milhares de eventos | Paginação/janela explícita; somatórios íntegros |
+| U09 | D | Arquivo vazio, inválido, >5 MiB, formato desconhecido ou JSONL múltiplo | Erro claro; sem fallback e sem ecoar payload |
+| U10 | D | Alternância Response/Code/Observability e layout mobile/teclado | Navegação preservada, layout responsivo, controles acessíveis |
 | R01 | D/E | Response + Code Evaluation já existentes | Fluxos continuam acessíveis e comportamentos preservados |
 | R02 | E | Recurso estático em produção | Nenhum arquivo importado enviado à rede; exposição de API não necessária |
 

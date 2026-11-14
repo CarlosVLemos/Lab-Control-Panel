@@ -1,6 +1,6 @@
 # LCP-OBS-001 — Plano de etapas e gates
 
-**Estado:** Etapas A e B validadas pelo operador; B com parecer Mefisto `passed`. Etapa C tem contrato proposto e tarefa preparada **aguardando autorização do operador**; Etapas D/E bloqueadas.
+**Estado 14/11:** A/B/C concluídas e validadas pelo operador; C FROZEN v1 no commit local `3289cc7d` e parecer Mefisto `passed`. Etapa D tem [proposta de interface](UI_CONTRACT_D_DRAFT.md) e [tarefa](CODEX_TASK_D.md), aguardando autorização do operador; E bloqueada. Código A/B/C segue somente no clone local.
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)
@@ -25,7 +25,7 @@
 **Aceite:** fixtures completas/incompletas/sobrepostas, não duplicação, sem inventar custo/tempo; bateria de testes aplicada **pelo operador ao final**.
 
 ## D — Interface de observabilidade
-**Escopo:** adicionar aba Observability ao Vue, seletor de arquivo, KPIs, gráfico em degraus, timeline navegável e replay de eventos, detalhes, estados de dados ausentes e erros.
+**Escopo proposto:** adicionar aba Observability ao Vue conforme [UI_CONTRACT_D_DRAFT.md](UI_CONTRACT_D_DRAFT.md), com seletor de JSON local, KPIs, gráfico ordinal de tokens, trilhas e replay sem cronologia inventada, detalhes seguros e estados de dados ausentes/erros. [CODEX_TASK_D.md](CODEX_TASK_D.md) só executável ao ser enviado pelo operador.
 **Entregáveis:** componentes em `frontend/src/**`; preservar Response/Code Evaluation; sem novos serviços.
 **Aceite:** usuário importa arquivo real e arquivo declarativo, observa eventos e lacunas, Play/Pause/anterior/próximo funcionam; operador executa build/testes/e2e aprovados ao final.
 
