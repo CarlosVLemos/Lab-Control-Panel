@@ -125,22 +125,41 @@ test('limpa evidência anterior quando uma nova importação é inválida ou ile
   await expect(page.locator('.overview-kpis')).toHaveCount(0)
 })
 
+
 test('aplica status por trace e limpa a seleção quando os filtros não retornam execuções', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Observabilidade' }).click()
-  const modelFilter = page.locator('.trace-filters').getByLabel('Modelo', { exact: true })
 
+  // Ordem dos campos na interface: Modelo, Ferramenta, Status
+  const filters = page.locator('.trace-filters select')
+
+  await expect(filters).toHaveCount(3)
+
+  const modelFilter = filters.nth(0)
+  const toolFilter = filters.nth(1)
+  const statusFilter = filters.nth(2)
+
+  // Verifica que execuções com falhas não são classificadas como sucesso
   await modelFilter.selectOption('Qwen/Qwen3-1.7B')
-  await page.getByLabel('Status').selectOption('success')
+  await statusFilter.selectOption('success')
+
   await expect(page.locator('.trace-list')).not.toContainText('nl2bash/1')
 
+  // Verifica o estado vazio quando os filtros não encontram resultados
   await modelFilter.selectOption('Qwen/Qwen3-0.6B')
-  await page.getByLabel('Ferramenta').selectOption('python_interpreter')
-  await expect(page.getByText('Nenhuma execução corresponde aos filtros selecionados.')).toBeVisible()
+  await toolFilter.selectOption('python_interpreter')
+
+  await expect(
+    page.getByText('Nenhuma execução corresponde aos filtros selecionados.')
+  ).toBeVisible()
+
   await expect(page.locator('.trace-list button.selected')).toHaveCount(0)
   await expect(page.locator('.lane-card')).toHaveCount(0)
 
-  await page.getByLabel('Status').selectOption('error')
+  // Verifica que uma seleção válida é restaurada quando há resultados
+  await statusFilter.selectOption('error')
+
   await expect(page.locator('.trace-list button.selected')).toHaveCount(1)
   await expect(page.locator('.lane-card')).toBeVisible()
 })
+
