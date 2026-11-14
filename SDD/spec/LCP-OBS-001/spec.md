@@ -1,6 +1,6 @@
 # LCP-OBS-001 — Especificação funcional da observabilidade agêntica
 
-**Estado:** **Etapa A autorizada para implementação (contrato de envelope FROZEN v1)**. Etapas B–E continuam planejadas, sem execução autorizada automaticamente. O adaptador AgentTrace permanece DRAFT até a amostra ser inspecionada.
+**Estado:** **Etapa A validada pelo operador e CR-001 aprovada**; **Etapa B autorizada para implementação, contrato FROZEN pela CR-002**. Etapas C–E continuam planejadas. Não confundir aprovação humana de contrato com testes B já executados.
 **Trilha:** CRITICAL (arquivos de terceiros, fronteira de importação + interface pública).
 **Base de planejamento:** `main@8d4efebc305b2cf671d807ea42d82873373434ff` em 2026-11-14.
 **Decisão:** [ADR-004](../../../docs/architecture/ADR-004-import-first-agent-observability.md).
@@ -39,7 +39,7 @@ Nova área/tab `Observability` na interface existente, preservando `Response` e 
 5. Detalhe: tipo, identificador, timestamps, status, métricas, fonte, dados truncados/sanitizados; não renderizar HTML/JS de entrada.
 
 ## 6. Dados e exemplos
-- Fonte externa inicial **selecionada**: AgentTrace (NL2Bash/Qwen3-0.6B); ver [mapeamento e limites](source-agenttrace.md). Uma linha real ainda depende de fornecimento, sanitização e revisão pelo operador. Não afirmar que existe amostra já baixada.
+- Fonte externa inicial **selecionada**: AgentTrace (NL2Bash/Qwen3-0.6B); ver [mapeamento e limites](source-agenttrace.md). A amostra sanitizada já foi **coletada pelo operador e inspecionada por Mefisto no Atlas** (2 spans, 2 LLMSteps; hash registrado em [CR-002](CHANGE_REQUEST-002.md)); seu arquivo **não** está na branch remota. Licença/atribuição e revisão para redistribuição continuam a cargo do operador.
 - Exemplo sintético próprio deve ser rotulado `fixture` e jamais descrito como execução real. Criar caso completo, parcial, faltando timestamps, faltando token, tokens cumulativos/incrementais, spans sobrepostos, erros, eventos sem outcome, campo desconhecido, tamanho excedido e JSON malformado.
 - Preservar CODE-001 existente como experiência separada. Nenhuma alteração em hashes, fixtures e contratos congelados do RAG para facilitar LCP-OBS-001.
 
@@ -55,4 +55,4 @@ Principal risco: apresentação visual mais precisa do que a fonte permite; segu
 - Cada etapa tem teste preparado e relatório de execução **do operador**, não do Codex, salvo autorização pontual posterior.
 - Handoff e documentação atualizados sem alegar live monitoring, GPU ou integração de provedor.
 
-**Gate 14/11/2026:** pela orientação do operador para avançar, a Etapa A (modelo e validador do envelope LCP v1) está liberada para **edição de código/testes apenas**. O usuário mantém o controle da execução. Etapa B continua dependente de inspeção de amostra real, sem FROZEN do adaptador; ver [tarefa para Codex](CODEX_TASK_A.md).
+**Gate 14/11/2026:** CR-001 e CR-002 aprovadas explicitamente pelo operador. Etapa A tem 21/21 testes focados, 30/30 de regressão e build PASS, executados pelo operador; falta registrar evidência no `validation-stage-a.md` **local**. Etapa B liberada só para **edição de código e testes**; ver [CODEX_TASK_B.md](CODEX_TASK_B.md).

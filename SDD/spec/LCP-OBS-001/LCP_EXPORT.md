@@ -6,7 +6,7 @@ Copie o trecho abaixo para a conversa do agente que realizou a tarefa **somente 
 
 Você está preparando um **arquivo de evidências retrospectivas para importação no Lab Control Panel**. Sua missão é organizar exclusivamente dados comprovadamente acessíveis nesta conversa e em arquivos de execução já visíveis.
 
-1. Produza um JSON UTF-8 válido com `schema_version: "lcp.observation.v1"`, `run_id`, `source.kind: "self_report"`, `source.format: "lcp.observation.v1"`, `source.producer`, `agent`, `started_at`, `ended_at`, `total_duration_ms` (se medido) e `events`.
+1. Produza um JSON UTF-8 válido com `schema_version: "lcp.observation.v1"`, `run_id`, `source.kind: "self_report"`, `source.format: "lcp.observation.v1"`, `source.producer`, `agent` (nome `null` se desconhecido), `started_at`, `ended_at`, `total_duration_ms` (se medido) e `events`.
 2. Para cada evento conhecido, registre `id`, `seq`, `kind`, `name`, `status`, `started_at`, `ended_at`, `usage` e `detail`. Use `null` para métricas ausentes; não preencha com zeros.
 3. Não invente ferramentas, comandos executados, durações, timestamps, tokens, preço, número de tentativas, observações ou erros. Distingua claramente o que foi visto no histórico do que é apenas descrição sua.
 4. Não altere logs ou testes originais, não rode nada, não baixe pacotes, não faça chamadas externas, não instale instrumentação, não crie arquivos executáveis.
@@ -17,4 +17,4 @@ Você está preparando um **arquivo de evidências retrospectivas para importaç
 
 ---
 
-**Aviso:** gerado pelo próprio agente = **autorrelato**, não rastreamento independente. O LCP deve mostrar esse rótulo. O envelope v1 está FROZEN para a Etapa A; este prompt retrospectivo permanece **DRAFT** e deve ser testado antes de divulgação pública.
+**Aviso:** gerado pelo próprio agente = **autorrelato**, não rastreamento independente. O LCP deve mostrar esse rótulo. O envelope v1 + CR-002 está FROZEN; `agent.name=null` e `event.position` opcional são aceitos. Este prompt retrospectivo permanece **DRAFT** e deve ser testado antes de divulgação pública.
