@@ -26,11 +26,7 @@ const delta = computed(() => report.value ? accuracy(report.value.summary.candid
 const source: ReportSource = import.meta.env.VITE_DEMO_OFFLINE === 'true'
   ? fixtureSource
   : new HttpReportSource('/api/demo/experiments')
-const sourceLabel = import.meta.env.VITE_DEMO_OFFLINE === 'true' ? 'FIXTURE OFFLINE' : 'API PERSISTIDA'
-
-function demonstrateError() {
-  void executeFrom({ execute: async () => { throw new Error('Falha simulada da fonte de dados. Nenhum dado de fallback foi exibido.') } })
-}
+const sourceLabel = import.meta.env.VITE_DEMO_OFFLINE === 'true' ? 'Fixture offline' : 'API'
 
 async function executeFrom(selectedSource: ReportSource) {
   state.value = 'loading'
@@ -53,61 +49,56 @@ function execute() { return executeFrom(source) }
 <template>
   <main class="shell">
     <header class="topbar">
-      <a class="brand" href="#main-content" aria-label="Ir para a comparação">LCP<span>/</span> LAB</a>
-      <nav class="view-switcher" aria-label="Selecionar demonstração"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Response</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Code Evaluation</button><button type="button" :class="{ active: activeView === 'observability' }" @click="activeView = 'observability'">Observability</button></nav>
-      <div class="badges" aria-label="Contexto da demonstração">
-        <template v-if="activeView === 'response'"><span class="badge warning">DEMONSTRAÇÃO</span><span class="badge">DADOS SINTÉTICOS</span><span class="badge">MOCK</span></template><template v-else-if="activeView === 'code'"><span class="badge warning">EVIDÊNCIA VERSIONADA</span><span class="badge">SEM EXECUÇÃO</span></template><template v-else><span class="badge warning">ARQUIVO LOCAL</span><span class="badge">SEM UPLOAD</span></template>
-      </div>
+      <a class="brand" href="#main-content" aria-label="Ir para o conteúdo">LCP</a>
+      <nav class="view-switcher" aria-label="Selecionar avaliação"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Classificação</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Código</button><button type="button" :class="{ active: activeView === 'observability' }" @click="activeView = 'observability'">Observabilidade</button></nav>
     </header>
 
     <template v-if="activeView === 'response'">
     <section id="main-content" class="hero" aria-labelledby="page-title">
       <div>
-        <p class="eyebrow">Experimento de classificação · dataset sintético</p>
-        <h1 id="page-title">Compare decisões.<br><em>Não invente confiança.</em></h1>
-        <p class="lede">Uma visão auditável do dataset <code>support-intents/v1</code>. Resultados persistidos de {{ report?.cases.length ?? 0 }} casos sintéticos; sem execução de IA real.</p>
+        <h1 id="page-title">Comparação de classificadores</h1>
+        <p class="lede"><code>support-intents/v1</code> · dados sintéticos</p>
       </div>
       <div class="hero-actions">
         <button class="button secondary" type="button" @click="execute">Executar comparação</button>
-        <button class="button ghost" type="button" @click="demonstrateError">Ver estado de erro</button>
       </div>
     </section>
 
     <section v-if="state === 'loading'" class="state-card" role="status" aria-live="polite">
-      <span class="spinner" aria-hidden="true"></span><div><strong>Carregando relatório</strong><p>A fonte de dados está sendo consultada.</p></div>
+      <span class="spinner" aria-hidden="true"></span><div><strong>Carregando relatório</strong></div>
     </section>
 
     <section v-else-if="state === 'error'" class="state-card error" role="alert">
-      <div><strong>Relatório indisponível</strong><p>{{ errorMessage }}</p><p>Nenhum resultado sintético é usado como fallback para ocultar a falha.</p></div>
+      <div><strong>Relatório indisponível</strong><p>{{ errorMessage }}</p></div>
       <button class="button secondary" type="button" @click="execute">Tentar novamente</button>
     </section>
 
     <section v-else-if="state === 'empty'" class="state-card" role="status">
-      <div><strong>Nenhuma comparação executada</strong><p>Execute a comparação para carregar os resultados persistidos.</p></div>
+      <div><strong>Nenhuma comparação executada</strong></div>
     </section>
 
     <template v-else-if="report">
       <section class="metadata" aria-label="Metadados do relatório">
-        <span>EXPERIMENTO · {{ report.experimentId }}</span><span>DATASET · {{ report.dataset.id }}/{{ report.dataset.version }}</span><span>FONTE · {{ sourceLabel }}</span>
+        <span>Experimento: {{ report.experimentId }}</span><span>Dataset: {{ report.dataset.id }}/{{ report.dataset.version }}</span><span>Fonte: {{ sourceLabel }}</span>
       </section>
 
       <section class="score-grid" aria-label="Comparação de acurácia">
         <article class="score-card baseline">
           <p>{{ report.baseline.label }}</p><strong>{{ accuracy(report.summary.baseline.passed, report.summary.baseline.total) }}<small>%</small></strong>
-          <span>{{ report.summary.baseline.passed }} de {{ report.summary.baseline.total }} casos aprovados</span>
+          <span>{{ report.summary.baseline.passed }}/{{ report.summary.baseline.total }} aprovados</span>
         </article>
         <article class="score-card candidate">
           <p>{{ report.candidate.label }}</p><strong>{{ accuracy(report.summary.candidate.passed, report.summary.candidate.total) }}<small>%</small></strong>
-          <span>{{ report.summary.candidate.passed }} de {{ report.summary.candidate.total }} casos aprovados</span>
+          <span>{{ report.summary.candidate.passed }}/{{ report.summary.candidate.total }} aprovados</span>
         </article>
         <article class="delta-card">
-          <p>Diferença observada</p><strong>+{{ delta }} <small>p.p.</small></strong><span>Derivada da fixture; não é métrica de produção.</span>
+          <p>Variação</p><strong>{{ delta > 0 ? '+' : '' }}{{ delta }} <small>p.p.</small></strong>
         </article>
       </section>
 
       <section class="workspace" aria-label="Casos e detalhes">
         <div class="case-panel">
-          <div class="section-heading"><div><p class="eyebrow">EVIDÊNCIAS</p><h2>Casos executados</h2></div><span>{{ filteredCases.length }} visíveis</span></div>
+          <div class="section-heading"><h2>Casos</h2><span>{{ filteredCases.length }} visíveis</span></div>
           <div class="filters" role="group" aria-label="Filtrar evidências">
             <button v-for="option in filters" :key="option.value" class="filter" :class="{ active: filter === option.value }" type="button" :aria-pressed="filter === option.value" @click="filter = option.value">
               {{ option.label }}
@@ -130,16 +121,14 @@ function execute() { return executeFrom(source) }
 
         <aside class="detail-panel" aria-live="polite">
           <template v-if="selected">
-            <p class="eyebrow">DETALHE DO CASO</p><h2>{{ selected.id }}</h2><p class="input">“{{ selected.input.text }}”</p>
+            <h2>{{ selected.id }}</h2><p class="input">“{{ selected.input.text }}”</p>
             <dl><div><dt>Esperado</dt><dd><code>{{ selected.expected.label }}</code></dd></div><div><dt>Baseline</dt><dd><code>{{ displayOutput(selected.baseline.output) }}</code> · {{ selected.baseline.passed ? 'passou' : 'falhou' }}</dd></div><div><dt>Candidato</dt><dd><code>{{ displayOutput(selected.candidate.output) }}</code> · {{ selected.candidate.passed ? 'passou' : 'falhou' }}</dd></div></dl>
-            <p class="detail-note">Evidência: <strong>{{ { improved: 'candidato corrigiu a decisão', regressed: 'candidato perdeu uma decisão', stable: 'sem mudança observada' }[evidenceState(selected)] }}</strong>.</p>
           </template>
-          <template v-else><p class="eyebrow">DETALHE DO CASO</p><h2>Selecione uma evidência</h2><p>Use Tab e Enter ou clique numa linha para inspecionar esperado, obtido e estado.</p></template>
+          <template v-else><h2>Selecione um caso</h2><p>Escolha uma linha na tabela.</p></template>
         </aside>
       </section>
     </template>
 
-    <footer>LAB CONTROL PANEL · DEMONSTRAÇÃO COM DADOS SINTÉTICOS · custo, latência e tokens não foram capturados.</footer>
     </template>
     <CodeEvaluationView v-else-if="activeView === 'code'" />
     <ObservabilityView v-else />
