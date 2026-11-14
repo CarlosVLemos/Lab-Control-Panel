@@ -1,6 +1,8 @@
 # LCP-OBS-001 — Validação da Etapa D
 
-**Estado:** `NOT_RUN` — implementação, testes Vitest e roteiro visual preparados; execução reservada ao operador.
+**Estado:** `passed_with_restrictions` em `20d210ecccf0fdfe419b670e6550f76c2b071ff5` — Vitest, oráculos locais e build aprovados. Playwright bloqueado por dependência ausente; roteiro visual permanece `NOT_RUN`.
+
+**Ambiente:** Node `v26.13.0`, npm `12.2.2`, dependências frontend já presentes. Execução autorizada pelo operador no pedido de limpeza da interface em 14/11/2026; nenhuma dependência foi instalada.
 
 ## Escopo preparado
 
@@ -14,22 +16,15 @@
 - Detalhes renderizados como texto, truncamento sinalizado e nenhuma execução de conteúdo importado.
 - Exemplo sintético explícito; nenhum arquivo AgentTrace real foi copiado ou versionado.
 
-## Matriz automatizada preparada
+## Matriz automatizada
 
 | ID | Verificação | Estado |
 |---|---|---|
-| U01 | Roteamento AgentTrace, métricas e `final_answer` como mensagem | `NOT_RUN` |
-| U02 | Separação e ordenação das faixas, posição monotônica relativa | `NOT_RUN` |
-| U03 | Gráfico vazio quando consumo não está disponível | `NOT_RUN` |
-| U04 | Texto hostil inerte e truncamento determinístico | `NOT_RUN` |
-| U05 | Autorrelato e eventos sem posição observável | `NOT_RUN` |
-| U06 | Lacuna interrompe segmentos cumulativos e cobertura permanece visível | `NOT_RUN` |
-| U07 | Ordem estável dentro da faixa sem cronologia global | `NOT_RUN` |
-| U08 | Paginação explícita de 10.000 registros | `NOT_RUN` |
-| U09 | Rejeição de tamanho, JSONL, formato desconhecido e objeto ambíguo | `NOT_RUN` |
-| U10 | Roteamento LCP v1, proveniência sintética e `null` como `—` | `NOT_RUN` |
-| Regressão | Suíte frontend completa A/B/C/D | `NOT_RUN` |
-| Build | TypeScript/Vite | `NOT_RUN` |
+| U01–U10 | `npm test -- src/domain/observation-dashboard.test.ts` | `PASS` — 10/10 |
+| Oráculos locais | `AGENTTRACE_SAMPLE_PATH=/home/carlos/Documentos/www/Ifood/lcp-audit/agenttrace-sample.json npm test -- src/domain/observation-agenttrace-local.test.ts src/domain/observation-metrics-local.test.ts` | `PASS` — 2/2 |
+| Regressão | `npm test` | `PASS` — 75/75; 2 testes locais condicionais ignorados e executados separadamente acima |
+| Build | `npm run build` | `PASS` — TypeScript e Vite, 26 módulos transformados |
+| Playwright | `npx --no-install playwright test --config playwright.config.ts` | `BLOCKED` — `@playwright/test` não está instalado; tentativa sem instalação não coletou testes e foi interrompida |
 
 ## Comandos para o operador
 
