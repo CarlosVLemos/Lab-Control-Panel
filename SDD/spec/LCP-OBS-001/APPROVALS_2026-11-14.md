@@ -31,3 +31,9 @@
 **Etapa B liberada apenas para edição local de código/fixtures/testes e documentos relacionados ao adaptador.** Operador controla a execução de testes/builds, instalações, downloads, venv, containers, migrações e push/PR que dispare CI. Git, `gh`, shell leve, leitura/edição e commits locais autorizados.
 
 **Etapas C, D, deploy, merge e publicação não estão autorizados por esta decisão.** Nenhuma execução externa de agente ou chamada paga está autorizada.
+
+## Registro de encerramento técnico da Etapa B
+
+O operador reportou em 14/11/2026: Vitest contrato+adaptador **41/41 PASS**, amostra AgentTrace local **1/1 PASS**, regressão frontend **50 PASS / 1 SKIPPED** (teste local executado separadamente) e build **PASS**; commit local de implementação `4de3185be423231169778c0bc4dc45f241e94af0`. O revisor Mefisto emitiu **`passed`** sem achados BLOCKER/HIGH/MEDIUM; dois achados LOW (limite combinado de 10k e variante JSONL), risco de licença/sanitização antes de redistribuir, e relatou atualizar `validation-stage-b.md` no commit local `1253fb59c28526b13946e85deda6d94700607a93`. **Não há evidência de push, PR ou merge da Etapa B.**
+
+A CR-001 autoriza **definir** `summary` na Etapa C, mas o formato de métricas ainda não havia sido especificado. O arquivo [METRICS_CONTRACT_C_DRAFT.md](METRICS_CONTRACT_C_DRAFT.md) propõe uma forma interna para aprovação e implementação futuras; a mera revisão B não constitui aprovação automática para executar C. O envio de [CODEX_TASK_C.md](CODEX_TASK_C.md) ao Codex pelo operador pode constituir essa autorização para edição local apenas, preservando controles sobre testes/instalações/push.

@@ -31,6 +31,11 @@
 | M02 | C | Totais cumulativos e spans pai/filho | Sem dupla contagem; ambiguidade exposta |
 | M03 | C | Eventos sem tempo, sobrepostos, falha sem duração | Não somar durations para criar tempo total; estados corretos |
 | M04 | C | Custo ausente ou modelo/tarifa não confirmados | Null; nunca custo artificial 0 USD |
+| M05 | C | 2 gerações AgentTrace, `bash` error, `final_answer` message | 4 eventos, 2 model, 1 tool, 1 message, 1 erro explícito, 3 unknown; 3122 entrada, 1439 saída, 4561 total; duration reportada 15910.931417 ms |
+| M06 | C | Uma geração sem input ou output entre passos válidos | Total correspondente null, cobertura parcial e cumulativo null a partir da lacuna; valores pontuais preservados |
+| M07 | C | Nenhuma geração/eventos, source self_report | Contagens 0, tokens/custo/tempo desconhecidos null; proveniência de autorrelato preservada |
+| M08 | C | Duração reportada e timestamps divergentes, operações simultâneas | Preferir duração reportada com `basis=reported`, manter aviso; não somar durações |
+| M09 | C | Tokens incremental/cumulativo ambíguos, spans nested, overflow de soma | Não produzir total falso/overflow nem contagem duplicada; aviso e null na dimensão afetada |
 | U01 | D | Trace externo importado | KPIs, timeline, gráfico e detalhe conferem com dados brutos |
 | U02 | D | Play/Pause/Anterior/Próximo e seleção | Estado coerente; sem eventos ou tempos simulados |
 | U03 | D | Sem consumo ou trace parcial | Gráfico vazio informativo e lacunas visíveis |
