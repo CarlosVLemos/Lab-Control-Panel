@@ -1,11 +1,11 @@
-# LCP-OBS-001 — Contrato proposto de métricas (Etapa C)
+# LCP-OBS-001 — Contrato de métricas (Etapa C) — FROZEN v1
 
-**Estado:** PROPOSED / AWAITING OPERATOR AUTHORIZATION. A CR-001 aprovou que `summary` seja criado somente na Etapa C; **não aprovou antecipadamente um formato específico**. Esta proposta não modifica o envelope público `lcp.observation.v1` nem os contratos FROZEN das Etapas A/B.
+**Estado:** **FROZEN v1**, após autorização do operador, implementação da Etapa C, correção dos achados finais e revisão independente Mefisto `passed`. Mudanças semânticas futuras exigem Change Request explícita. Este contrato não modifica o envelope público `lcp.observation.v1` nem os contratos FROZEN das Etapas A/B.
 
 ## Fronteira e API
-- Implementação proposta: função **pura e determinística** `computeObservationMetrics(run: ObservationRun): ObservationMetrics` em `frontend/src/domain/observation-metrics.ts`, consumindo **somente resultado já validado** de A/B, sem leitura de arquivo, HTTP, preço remoto, modelo de IA, logs, persistência ou UI.
+- Implementação: função **pura e determinística** `computeObservationMetrics(run: ObservationRun): ObservationMetrics` em `frontend/src/domain/observation-metrics.ts`, consumindo **somente resultado já validado** de A/B, sem leitura de arquivo, HTTP, preço remoto, modelo de IA, logs, persistência ou UI.
 - Projeção separada do envelope: não adicionar `summary` de volta a `ObservationRun` da Etapa A nem ao JSON v1; consumidores da Etapa D usam `{run, metrics}`.
-- Representação proposta: `summary` com contagens explícitas, duração com origem, cobertura de uso, totais nullable, custos nullable e `tokenSeries` (pontos por etapa de geração). Os nomes exatos podem ser ajustados **antes de implementar** com justificativa; se alterarem semântica normativa, requerem aprovação do operador.
+- Representação: `summary` com contagens explícitas, duração com origem, cobertura de uso, totais nullable, custos nullable e `tokenSeries` (pontos por etapa de geração). Qualquer alteração de semântica, campos ou interpretação normativa requer aprovação do operador por Change Request.
 
 ## Campos semânticos mínimos
 ```ts

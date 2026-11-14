@@ -2,7 +2,7 @@
 
 **Estado da execução:** evidências externas do operador recebidas em 2026-11-14.
 
-**Revisão independente Mefisto:** `passed_with_restrictions` — inspeção estática; nenhum teste ou build executado pelo revisor.
+**Revisão independente Mefisto:** `passed` — correção final revisada estaticamente; nenhum teste ou build executado pelo revisor.
 
 ## Escopo implementado
 
@@ -14,7 +14,7 @@
 - Custo agregado sempre `null`; nenhuma estimativa de preço ou promoção de custos por evento.
 - Avisos de origem preservados e deduplicados, incluindo a distinção de autorrelato, sem conteúdo de `detail`.
 
-O contrato `METRICS_CONTRACT_C_DRAFT.md` permanece identificado como proposta documental; esta implementação local foi autorizada expressamente pelo operador dentro desse limite. Nenhuma parte da Etapa D foi iniciada.
+O contrato `METRICS_CONTRACT_C_DRAFT.md` foi congelado documentalmente como **FROZEN v1** após validação externa da correção e revisão final. O nome histórico do arquivo foi preservado para evitar quebra de referências. Nenhuma parte da Etapa D foi iniciada.
 
 ## Evidências fornecidas pelo operador
 
@@ -27,9 +27,20 @@ Os resultados abaixo foram reportados pelo operador para o commit `30a044324b9dd
 | Regressão frontend | `60 PASS, 2 SKIPPED`; os dois testes condicionados a variável de ambiente foram executados separadamente nas Etapas B e C |
 | Build TypeScript/Vite | `PASS` |
 
+### Evidências da correção final
+
+Os resultados abaixo foram reportados pelo operador para o commit `f61d510edda88eecc94bf42382fd59298dcd8be9`; não foram reproduzidos por Mefisto nesta revisão.
+
+| Verificação | Resultado externo |
+|---|---|
+| Testes focados de métricas | `15/15 PASS` |
+| Oráculo da amostra AgentTrace real | `1/1 PASS` |
+| Regressão frontend | `65 PASS, 2 SKIPPED`; os skips permanecem condicionados a variável de ambiente |
+| Build TypeScript/Vite | `PASS` |
+
 ## Verificações de Mefisto
 
-- `REVIEWED_STATICALLY`: contrato proposto, implementação e testes comparados linha a linha.
+- `REVIEWED_STATICALLY`: contrato de métricas, implementação e testes comparados linha a linha.
 - `REVIEWED_STATICALLY`: totais completos, lacunas e série cumulativa seguem a política fail-closed; uma lacuna não é ocultada por passos posteriores.
 - `REVIEWED_STATICALLY`: duração usa total reportado ou timestamps da execução, sem somar operações sobrepostas.
 - `REVIEWED_STATICALLY`: contagens usam os tipos normalizados; `final_answer` permanece mensagem quando assim classificado pelo adaptador.
@@ -37,9 +48,11 @@ Os resultados abaixo foram reportados pelo operador para o commit `30a044324b9dd
 - `REVIEWED_STATICALLY`: a função não altera o objeto de entrada; o teste M01 verifica equivalência antes/depois.
 - `NOT_RUN_BY_REVIEWER`: testes focados, teste real, regressão e build.
 
-## Achados
+## Achados da revisão anterior
 
 ### MEDIUM — cobertura considera token inseguro como conhecido
+
+**Estado final:** `RESOLVIDO` no commit `f61d510edda88eecc94bf42382fd59298dcd8be9`.
 
 `aggregateDimension` calcula `known` apenas por `value !== null`, antes de validar se o valor é inteiro seguro. A soma falha fechada e o total fica `null`, porém um valor fracionário ou maior que `Number.MAX_SAFE_INTEGER` ainda pode produzir `known === eligible`. Isso diverge da definição contratual de `known` como quantidade de operações com dado **válido** e gera metadados contraditórios: cobertura completa, total indisponível e aviso de soma insegura.
 
@@ -47,19 +60,23 @@ Correção mínima proposta antes de congelar: contar como conhecido somente tok
 
 ### LOW — invalidação hierárquica é deliberadamente ampla
 
+**Estado final:** `RESOLVIDO` por decisão normativa conservadora em FROZEN v1.
+
 Qualquer evento `model` que tenha outro `model` como ancestral torna todos os totais e cumulativos nulos. A regra é segura contra dupla contagem, mas também invalida chamadas aninhadas que poderiam ser independentes. Como v1 não possui metadado capaz de provar inclusão versus uso incremental independente, a postura conservadora é aceitável. Antes do congelamento, o contrato deve explicitar que ancestralidade `model → model` é tratada como ambiguidade em v1; uma futura distinção exige evolução contratual, não inferência.
 
 ### LOW — limites dos testes adversariais
+
+**Estado final:** `RESOLVIDO` com cinco casos adversariais adicionais.
 
 M09 cobre overflow da soma de dois inteiros individualmente seguros e ordinal duplicado, mas não cobre token individual fracionário/inseguro, overflow da dimensão de saída nem ancestralidade indireta. Os mesmos helpers atendem esses caminhos, porém os casos não estão protegidos por regressão específica.
 
 ## Decisão de congelamento
 
-O contrato **não deve ser marcado `FROZEN v1` ainda**. A correção de cobertura do achado MEDIUM e os testes correspondentes são necessários. Depois disso, a política hierárquica pode ser congelada sem mudança de código, desde que sua natureza conservadora seja explicitada normativamente.
+Os três achados da revisão anterior foram resolvidos, as evidências externas foram aprovadas e não há bloqueadores remanescentes. Mefisto recomenda e registra o contrato de métricas como **FROZEN v1** e a **Etapa C tecnicamente encerrada**. Mudanças semânticas futuras exigem Change Request explícita.
 
 ## Correção final preparada por Maquiavel
 
-As alterações abaixo foram preparadas após a revisão de Mefisto, mas ainda dependem de execução pelo operador e de nova revisão antes do congelamento:
+No momento da preparação, as alterações abaixo ainda dependiam de execução pelo operador e de nova revisão antes do congelamento:
 
 | Correção/verificação | Estado |
 |---|---|
@@ -72,7 +89,7 @@ As alterações abaixo foram preparadas após a revisão de Mefisto, mas ainda d
 | Regressão frontend completa | `NOT_RUN` |
 | Build TypeScript/Vite | `NOT_RUN` |
 
-A política conservadora de hierarquia foi explicitada no contrato proposto. O estado continua **não FROZEN** até o operador executar a validação e os achados serem revistos.
+A política conservadora de hierarquia foi explicitada normativamente. Os itens desta tabela registram o estado no momento da preparação; a execução posterior está registrada nas evidências da correção final acima.
 
 ## Comandos reservados ao operador
 
@@ -88,8 +105,8 @@ npm run build
 
 ## Riscos remanescentes
 
-- A estrutura permanece separada do envelope A/B e não deve ser consumida como contrato congelado antes da revalidação da correção indicada.
+- A estrutura permanece separada do envelope A/B e agora constitui contrato FROZEN v1 da projeção de métricas.
 - A política fail-closed evita totais artificiais, mas consumidores devem tratar os avisos e os campos nullable como parte do resultado, não como sucesso parcial silencioso.
 - A detecção de sobreposição permanece conservadora para eventos `model` em relação ancestral.
 - O teste real depende de arquivo externo controlado pelo operador e fica ignorado quando `AGENTTRACE_SAMPLE_PATH` não é informado.
-- Mefisto não executou testes ou build nesta revisão, conforme proibição do operador.
+- Mefisto não executou testes ou build nesta revisão; os resultados são evidências externas fornecidas pelo operador.
