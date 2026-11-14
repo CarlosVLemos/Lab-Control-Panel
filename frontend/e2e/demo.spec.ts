@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { MAX_OBSERVATION_BYTES } from '../src/domain/observation'
 
 test('executa comparação pela API e apresenta os seis casos persistidos', async ({ page }) => {
   await page.goto('/')
@@ -108,7 +109,7 @@ test('limpa evidência anterior quando uma nova importação é inválida ou ile
   await expect(page.locator('.lane-card')).toHaveCount(0)
 
   await restore.click()
-  await input.setInputFiles({ name: 'large.json', mimeType: 'application/json', buffer: Buffer.alloc(5_000_001, 32) })
+  await input.setInputFiles({ name: 'large.json', mimeType: 'application/json', buffer: Buffer.alloc(MAX_OBSERVATION_BYTES + 1, 32) })
   await expect(page.getByRole('alert')).toContainText('INPUT_TOO_LARGE')
   await expect(page.locator('.overview-kpis')).toHaveCount(0)
 
@@ -127,12 +128,13 @@ test('limpa evidência anterior quando uma nova importação é inválida ou ile
 test('aplica status por trace e limpa a seleção quando os filtros não retornam execuções', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Observabilidade' }).click()
+  const modelFilter = page.locator('.trace-filters').getByLabel('Modelo', { exact: true })
 
-  await page.getByLabel('Modelo').selectOption('Qwen/Qwen3-1.7B')
+  await modelFilter.selectOption('Qwen/Qwen3-1.7B')
   await page.getByLabel('Status').selectOption('success')
   await expect(page.locator('.trace-list')).not.toContainText('nl2bash/1')
 
-  await page.getByLabel('Modelo').selectOption('Qwen/Qwen3-0.6B')
+  await modelFilter.selectOption('Qwen/Qwen3-0.6B')
   await page.getByLabel('Ferramenta').selectOption('python_interpreter')
   await expect(page.getByText('Nenhuma execução corresponde aos filtros selecionados.')).toBeVisible()
   await expect(page.locator('.trace-list button.selected')).toHaveCount(0)
