@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import CodeEvaluationView from './components/CodeEvaluationView.vue'
+import ObservabilityView from './components/ObservabilityView.vue'
 import { fixtureSource } from './data/synthetic-fixture'
 import { HttpReportSource, type ReportSource } from './data/report-source'
 import { accuracy, displayOutput, evidenceState, type ExperimentCase, type ExperimentReport } from './domain/report'
@@ -13,7 +14,7 @@ const state = ref<ViewState>('empty')
 const selected = ref<ExperimentCase | null>(null)
 const filter = ref<Filter>('all')
 const errorMessage = ref('')
-const activeView = ref<'response' | 'code'>('response')
+const activeView = ref<'response' | 'code' | 'observability'>('response')
 const filters: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' }, { value: 'improved', label: 'Melhorou' },
   { value: 'regressed', label: 'Regrediu' }, { value: 'stable', label: 'Estável' },
@@ -53,9 +54,9 @@ function execute() { return executeFrom(source) }
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#main-content" aria-label="Ir para a comparação">LCP<span>/</span> LAB</a>
-      <nav class="view-switcher" aria-label="Selecionar demonstração"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Response</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Code Evaluation</button></nav>
+      <nav class="view-switcher" aria-label="Selecionar demonstração"><button type="button" :class="{ active: activeView === 'response' }" @click="activeView = 'response'">Response</button><button type="button" :class="{ active: activeView === 'code' }" @click="activeView = 'code'">Code Evaluation</button><button type="button" :class="{ active: activeView === 'observability' }" @click="activeView = 'observability'">Observability</button></nav>
       <div class="badges" aria-label="Contexto da demonstração">
-        <template v-if="activeView === 'response'"><span class="badge warning">DEMONSTRAÇÃO</span><span class="badge">DADOS SINTÉTICOS</span><span class="badge">MOCK</span></template><template v-else><span class="badge warning">EVIDÊNCIA VERSIONADA</span><span class="badge">SEM EXECUÇÃO</span></template>
+        <template v-if="activeView === 'response'"><span class="badge warning">DEMONSTRAÇÃO</span><span class="badge">DADOS SINTÉTICOS</span><span class="badge">MOCK</span></template><template v-else-if="activeView === 'code'"><span class="badge warning">EVIDÊNCIA VERSIONADA</span><span class="badge">SEM EXECUÇÃO</span></template><template v-else><span class="badge warning">ARQUIVO LOCAL</span><span class="badge">SEM UPLOAD</span></template>
       </div>
     </header>
 
@@ -140,6 +141,7 @@ function execute() { return executeFrom(source) }
 
     <footer>LAB CONTROL PANEL · DEMONSTRAÇÃO COM DADOS SINTÉTICOS · custo, latência e tokens não foram capturados.</footer>
     </template>
-    <CodeEvaluationView v-else />
+    <CodeEvaluationView v-else-if="activeView === 'code'" />
+    <ObservabilityView v-else />
   </main>
 </template>
