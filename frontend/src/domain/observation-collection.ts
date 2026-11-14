@@ -48,6 +48,8 @@ export interface TraceCollection {
   readonly traces: readonly TraceRecord[]
 }
 
+export type TraceStatus = 'success' | 'error' | 'unknown'
+
 export type CollectionParseResult =
   | { readonly ok: true; readonly value: TraceCollection }
   | { readonly ok: false; readonly errors: readonly ValidationIssue[] }
@@ -198,6 +200,29 @@ export function percentileNearestRank(values: readonly number[], percentile: num
 
 function toolSpans(trace: TraceRecord): readonly TraceSpanEvidence[] {
   return trace.spans.filter((span) => span.toolName !== 'final_answer')
+}
+
+export function traceFailureCount(trace: TraceRecord): number {
+  return toolSpans(trace).filter((span) => span.exitCode !== null && span.exitCode !== 0).length
+}
+
+/** Error takes precedence; success requires every executed tool to report exit code zero. */
+export function classifyTraceStatus(trace: TraceRecord): TraceStatus {
+  const spans = toolSpans(trace)
+  if (traceFailureCount(trace) > 0) return 'error'
+  if (spans.length > 0 && spans.every((span) => span.exitCode === 0)) return 'success'
+  return 'unknown'
+}
+
+export function resolveTraceSelection(
+  traces: readonly TraceRecord[],
+  selectedTraceId: string | null,
+): TraceRecord | null {
+  return traces.find((trace) => trace.traceId === selectedTraceId) ?? traces[0] ?? null
+}
+
+export function traceCountLabel(count: number): string {
+  return `${count} ${count === 1 ? 'trace carregado' : 'traces carregados'}`
 }
 
 export function collectionOverview(collection: TraceCollection): CollectionOverview {

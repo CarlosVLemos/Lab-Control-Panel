@@ -2,7 +2,8 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import realSampleText from '../data/evidence/obs-002-agenttrace-sample.json?raw'
 import {
-  collectionDiagnostics, collectionOverview, durationOutlierFence, parseAgentTraceCollection, spanEvidence,
+  classifyTraceStatus, collectionDiagnostics, collectionOverview, durationOutlierFence, parseAgentTraceCollection,
+  resolveTraceSelection, spanEvidence, traceCountLabel, traceFailureCount,
   type TraceCollection, type TraceDiagnostic, type TraceRecord,
 } from '../domain/observation-collection'
 import {
@@ -68,9 +69,11 @@ const chartPagination = computed(() => paginateItems(metrics.value?.tokenSeries 
 const chart = computed(() => buildTokenChart(chartPagination.value.items, run.value?.events ?? [], metrics.value?.warnings ?? []))
 const trustLabel = computed(() => run.value ? sourceTrustLabel(run.value) : '')
 const partialOrder = computed(() => lanes.value.length > 1)
+const loadedTraceCount = computed(() => collection.value?.traces.length ?? (run.value ? 1 : 0))
+const loadedFormatLabel = computed(() => inputFormat.value || 'formato não carregado')
 const statusMessage = computed(() => ({
   empty: 'Nenhuma evidência carregada.', loading: 'Lendo arquivo.', invalid: 'Arquivo rejeitado.',
-  ready: 'Evidência real validada.', partial: 'Arquivo validado com avisos.',
+  ready: 'Evidência validada.', partial: 'Arquivo validado com avisos.',
 })[state.value])
 
 function stopReplay(): void {
@@ -79,14 +82,8 @@ function stopReplay(): void {
   playing.value = false
 }
 
-function traceFailureCount(trace: TraceRecord): number {
-  return trace.spans.filter((span) => span.toolName !== 'final_answer' && span.exitCode !== null && span.exitCode !== 0).length
-}
-
 function traceMatchesStatus(trace: TraceRecord, status: Exclude<StatusFilter, 'all'>): boolean {
-  if (status === 'error' && traceFailureCount(trace) > 0) return true
-  if (status === 'success' && trace.spans.some((span) => span.toolName !== 'final_answer' && span.exitCode === 0)) return true
-  return trace.run.events.some((event) => event.status === status)
+  return classifyTraceStatus(trace) === status
 }
 
 function resetSelection(): void {
@@ -96,6 +93,19 @@ function resetSelection(): void {
   eventFilter.value = 'all'
   currentPage.value = 1
   chartPage.value = 1
+}
+
+function clearTraceSelection(): void {
+  resetSelection()
+  selectedTraceId.value = null
+  run.value = null
+  metrics.value = null
+}
+
+function clearImportedEvidence(): void {
+  collection.value = null
+  inputFormat.value = ''
+  clearTraceSelection()
 }
 
 function selectTrace(trace: TraceRecord): void {
@@ -109,7 +119,7 @@ function selectTrace(trace: TraceRecord): void {
 }
 
 function applyInput(input: string, label: string): void {
-  stopReplay()
+  clearImportedEvidence()
   errors.value = []
   fileName.value = label
   const batch = parseAgentTraceCollection(input)
@@ -135,7 +145,7 @@ function applyInput(input: string, label: string): void {
     selectedEventId.value = firstLane?.events[0]?.id ?? null
     return
   }
-  collection.value = null; run.value = null; metrics.value = null
+  clearImportedEvidence()
   errors.value = batch.errors.slice(0, 8)
   state.value = 'invalid'
 }
@@ -146,6 +156,8 @@ async function handleFile(event: Event): Promise<void> {
   const generation = ++importGeneration
   stopReplay()
   if (!file) return
+  clearImportedEvidence()
+  errors.value = []
   fileName.value = file.name
   if (file.size === 0 || file.size > MAX_OBSERVATION_BYTES) {
     errors.value = [{ severity: 'error', code: file.size === 0 ? 'EMPTY_FILE' : 'INPUT_TOO_LARGE', path: '$', message: file.size === 0 ? 'The selected file is empty.' : `File exceeds the ${MAX_OBSERVATION_BYTES}-byte limit.` }]
@@ -156,6 +168,7 @@ async function handleFile(event: Event): Promise<void> {
     const text = await file.text()
     if (generation === importGeneration) applyInput(text, file.name)
   } catch {
+    if (generation !== importGeneration) return
     errors.value = [{ severity: 'error', code: 'FILE_READ_FAILED', path: '$', message: 'The file could not be read.' }]
     state.value = 'invalid'
   } finally { input.value = '' }
@@ -225,14 +238,22 @@ function spanBar(event: ObservationEvent): { left: string; width: string } | nul
 }
 
 watch([selectedLaneId, eventFilter], () => { stopReplay(); currentPage.value = 1; selectedEventId.value = activeEvents.value[0]?.id ?? null })
-watch(filteredTraces, (traces) => { if (collection.value && !traces.some((trace) => trace.traceId === selectedTraceId.value) && traces[0]) selectTrace(traces[0]) })
+watch(filteredTraces, (traces) => {
+  if (!collection.value) return
+  const next = resolveTraceSelection(traces, selectedTraceId.value)
+  if (!next) {
+    clearTraceSelection()
+    return
+  }
+  if (next.traceId !== selectedTraceId.value) selectTrace(next)
+})
 onUnmounted(() => { importGeneration += 1; stopReplay() })
 loadRealSample()
 </script>
 
 <template>
   <section id="main-content" class="observability-hero" aria-labelledby="observability-title">
-    <div><h1 id="observability-title">Observabilidade</h1><p class="lede">12 traces reais · AgentTrace · análise determinística</p></div>
+    <div><h1 id="observability-title">Observabilidade</h1><p class="lede">{{ traceCountLabel(loadedTraceCount) }} · {{ loadedFormatLabel }} · análise determinística</p></div>
     <div class="import-actions"><label class="file-label" for="observation-file">Arquivo JSON ou JSONL local</label><input id="observation-file" class="file-input" type="file" accept=".json,.jsonl,application/json" @change="handleFile"><button class="button ghost" type="button" @click="loadRealSample">Restaurar amostra real</button><small>Máximo 5 MiB · processamento local, sem upload</small></div>
   </section>
   <section class="import-status" :class="state" aria-live="polite" :role="state === 'invalid' ? 'alert' : 'status'"><div><strong>{{ statusMessage }}</strong><span v-if="fileName">{{ fileName }}</span></div><ul v-if="state === 'invalid'" class="issue-list"><li v-for="item in errors" :key="`${item.code}-${item.path}`"><code>{{ item.code }}</code> · {{ item.path }} · {{ item.message }}</li></ul></section>
@@ -243,7 +264,7 @@ loadRealSample()
     <section class="model-comparison" aria-label="Comparação observada por modelo"><article v-for="model in overview.models" :key="model.model"><h2>{{ model.model }}</h2><dl><div><dt>Execuções</dt><dd>{{ model.traces }}</dd></div><div><dt>p50</dt><dd>{{ formatMs(model.durationP50Ms) }}</dd></div><div><dt>Ferramentas</dt><dd>{{ model.toolCalls }}</dd></div><div><dt>Falhas</dt><dd>{{ model.failures }}</dd></div></dl></article></section>
     <p class="method-note">Percentis: nearest-rank. Duração atípica: limite superior de Tukey (Q3 + 1,5 × IQR) = {{ formatMs(durationOutlierFence(collection.traces)) }}.</p>
 
-    <section class="trace-browser" aria-labelledby="trace-browser-title"><div class="section-heading"><h2 id="trace-browser-title">Execuções</h2><span>{{ filteredTraces.length }} de {{ collection.traces.length }}</span></div><div class="trace-filters"><label>Modelo<select v-model="modelFilter"><option value="all">Todos</option><option v-for="model in models" :key="model" :value="model">{{ model }}</option></select></label><label>Ferramenta<select v-model="toolFilter"><option value="all">Todas</option><option v-for="tool in tools" :key="tool" :value="tool">{{ tool }}</option></select></label><label>Status<select v-model="statusFilter"><option value="all">Todos</option><option value="success">Sucesso</option><option value="error">Erro</option><option value="unknown">Desconhecido</option></select></label></div><div class="trace-list"><button v-for="trace in filteredTraces" :key="trace.traceId" type="button" :class="{ selected: trace.traceId === selectedTraceId }" :aria-pressed="trace.traceId === selectedTraceId" @click="selectTrace(trace)"><strong>{{ trace.model ?? 'Modelo não informado' }}</strong><span>{{ trace.datasetName }}/{{ trace.taskId }}</span><small>{{ formatMs(trace.run.totalDurationMs) }} · {{ traceFailureCount(trace) }} falha(s)</small></button></div></section>
+    <section class="trace-browser" aria-labelledby="trace-browser-title"><div class="section-heading"><h2 id="trace-browser-title">Execuções</h2><span>{{ filteredTraces.length }} de {{ collection.traces.length }}</span></div><div class="trace-filters"><label>Modelo<select v-model="modelFilter"><option value="all">Todos</option><option v-for="model in models" :key="model" :value="model">{{ model }}</option></select></label><label>Ferramenta<select v-model="toolFilter"><option value="all">Todas</option><option v-for="tool in tools" :key="tool" :value="tool">{{ tool }}</option></select></label><label>Status<select v-model="statusFilter"><option value="all">Todos</option><option value="success">Sucesso</option><option value="error">Erro</option><option value="unknown">Desconhecido</option></select></label></div><div class="trace-list"><button v-for="trace in filteredTraces" :key="trace.traceId" type="button" :class="{ selected: trace.traceId === selectedTraceId }" :aria-pressed="trace.traceId === selectedTraceId" @click="selectTrace(trace)"><strong>{{ trace.model ?? 'Modelo não informado' }}</strong><span>{{ trace.datasetName }}/{{ trace.taskId }}</span><small>{{ formatMs(trace.run.totalDurationMs) }} · {{ classifyTraceStatus(trace) }} · {{ traceFailureCount(trace) }} falha(s)</small></button><p v-if="filteredTraces.length === 0" class="empty-list">Nenhuma execução corresponde aos filtros selecionados.</p></div></section>
 
     <section class="diagnostics-card" aria-labelledby="diagnostics-title"><div class="section-heading"><h2 id="diagnostics-title">Diagnósticos determinísticos</h2><span>{{ diagnostics.length }} evidências</span></div><div class="diagnostic-groups"><article v-for="kind in (['tool_error', 'repeated_call', 'duration_outlier', 'top_contributor'] as const)" :key="kind"><h3>{{ { tool_error: 'Erros de ferramenta', repeated_call: 'Chamadas repetidas', duration_outlier: 'Durações atípicas', top_contributor: 'Maiores operações medidas' }[kind] }}</h3><button v-for="item in diagnostics.filter((entry) => entry.kind === kind)" :key="item.id" type="button" @click="openDiagnostic(item)"><strong>{{ item.title }}</strong><span>{{ item.evidence }}</span><code>{{ item.traceId }}{{ item.spanId ? ` · ${item.spanId}` : '' }}</code></button><p v-if="!diagnostics.some((entry) => entry.kind === kind)">Nenhuma ocorrência na amostra.</p></article></div></section>
   </template>

@@ -125,3 +125,7 @@ export function formatToolArguments(value: unknown): string {
     return 'Argumentos indisponíveis.'
   }
 }
+
+export function publishedOutcomeLabel(resolved: boolean): string {
+  return resolved ? 'Resolvido · publicado' : 'Não resolvido · publicado'
+}

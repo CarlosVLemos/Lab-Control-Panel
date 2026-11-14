@@ -74,7 +74,7 @@ test('remove slogans, banners e rodapé promocional em todas as telas', async ({
   await expect(page.getByRole('heading', { name: 'Observabilidade' })).toBeVisible()
   await expect(page.getByText('Somente o que foi registrado.')).toHaveCount(0)
   await expect(page.getByText('EVIDÊNCIA LOCAL · SEM UPLOAD')).toHaveCount(0)
-  await expect(page.getByText('12 traces reais · AgentTrace · análise determinística')).toBeVisible()
+  await expect(page.getByText('12 traces carregados · AgentTrace JSONL · coleção · análise determinística')).toBeVisible()
 })
 
 test('apresenta EXP-002 real sem reconstruir patches ausentes', async ({ page }) => {
@@ -88,9 +88,57 @@ test('apresenta EXP-002 real sem reconstruir patches ausentes', async ({ page })
 test('investiga a coleção OBS-002 real e abre evidência diagnóstica', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Observabilidade' }).click()
-  await expect(page.getByText('Evidência real validada.')).toBeVisible()
+  await expect(page.getByText('Evidência validada.')).toBeVisible()
   await expect(page.getByText('12', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Diagnósticos determinísticos' })).toBeVisible()
   await page.getByText('Chamada idêntica repetida 2 vezes').click()
   await expect(page.getByText('f118f268-e868-4074-a691-dd1a981f3f87', { exact: true })).toBeVisible()
+})
+
+test('limpa evidência anterior quando uma nova importação é inválida ou ilegível', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Observabilidade' }).click()
+  const input = page.locator('#observation-file')
+  const restore = page.getByRole('button', { name: 'Restaurar amostra real' })
+
+  await expect(page.locator('.overview-kpis')).toBeVisible()
+  await input.setInputFiles({ name: 'empty.json', mimeType: 'application/json', buffer: Buffer.from('') })
+  await expect(page.getByRole('alert')).toContainText('EMPTY_FILE')
+  await expect(page.locator('.overview-kpis')).toHaveCount(0)
+  await expect(page.locator('.lane-card')).toHaveCount(0)
+
+  await restore.click()
+  await input.setInputFiles({ name: 'large.json', mimeType: 'application/json', buffer: Buffer.alloc(5_000_001, 32) })
+  await expect(page.getByRole('alert')).toContainText('INPUT_TOO_LARGE')
+  await expect(page.locator('.overview-kpis')).toHaveCount(0)
+
+  await restore.click()
+  await input.setInputFiles({ name: 'malformed.json', mimeType: 'application/json', buffer: Buffer.from('{') })
+  await expect(page.getByRole('alert')).toContainText('INVALID_COLLECTION')
+  await expect(page.locator('.overview-kpis')).toHaveCount(0)
+
+  await restore.click()
+  await page.evaluate(() => { File.prototype.text = async () => { throw new Error('read failed') } })
+  await input.setInputFiles({ name: 'unreadable.json', mimeType: 'application/json', buffer: Buffer.from('{}') })
+  await expect(page.getByRole('alert')).toContainText('FILE_READ_FAILED')
+  await expect(page.locator('.overview-kpis')).toHaveCount(0)
+})
+
+test('aplica status por trace e limpa a seleção quando os filtros não retornam execuções', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Observabilidade' }).click()
+
+  await page.getByLabel('Modelo').selectOption('Qwen/Qwen3-1.7B')
+  await page.getByLabel('Status').selectOption('success')
+  await expect(page.locator('.trace-list')).not.toContainText('nl2bash/1')
+
+  await page.getByLabel('Modelo').selectOption('Qwen/Qwen3-0.6B')
+  await page.getByLabel('Ferramenta').selectOption('python_interpreter')
+  await expect(page.getByText('Nenhuma execução corresponde aos filtros selecionados.')).toBeVisible()
+  await expect(page.locator('.trace-list button.selected')).toHaveCount(0)
+  await expect(page.locator('.lane-card')).toHaveCount(0)
+
+  await page.getByLabel('Status').selectOption('error')
+  await expect(page.locator('.trace-list button.selected')).toHaveCount(1)
+  await expect(page.locator('.lane-card')).toBeVisible()
 })

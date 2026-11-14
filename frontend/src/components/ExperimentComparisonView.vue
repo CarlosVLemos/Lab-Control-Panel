@@ -6,6 +6,7 @@ import {
   issueContext,
   parseExperimentComparison,
   parseUnifiedDiff,
+  publishedOutcomeLabel,
   toolCalls,
   type ExperimentEvent,
 } from '../domain/experiment-comparison'
@@ -17,6 +18,10 @@ const selectedRun = computed(() => comparison.runs.find((run) => run.model === s
 const selectedEvent = computed(() => selectedRun.value.events[selectedEventIndex.value] ?? selectedRun.value.events[0])
 const callsByModel = computed(() => Object.fromEntries(comparison.runs.map((run) => [run.model, toolCalls(run)])))
 const diffsByModel = computed(() => Object.fromEntries(comparison.runs.map((run) => [run.model, parseUnifiedDiff(run.patch)])))
+const availablePatchFileCount = computed(() => comparison.runs.reduce(
+  (total, run) => total + (diffsByModel.value[run.model]?.length ?? 0),
+  0,
+))
 
 function selectRun(model: string): void {
   selectedModel.value = model
@@ -52,7 +57,7 @@ function formatCost(value: number | null): string {
 
   <section class="agent-comparison" aria-label="Tentativas publicadas">
     <article v-for="run in comparison.runs" :key="run.model" class="agent-run-card">
-      <div class="candidate-heading"><h2>{{ run.model }}</h2><span class="result pass">Resolvido · publicado</span></div>
+      <div class="candidate-heading"><h2>{{ run.model }}</h2><span :class="['result', run.published_resolved ? 'pass' : 'fail']">{{ publishedOutcomeLabel(run.published_resolved) }}</span></div>
       <dl class="run-metrics">
         <div><dt>Chamadas de API</dt><dd>{{ run.reported_api_calls ?? '—' }}</dd></div>
         <div><dt>Chamadas de ferramenta</dt><dd>{{ callsByModel[run.model]?.length ?? 0 }}</dd></div>
@@ -71,7 +76,7 @@ function formatCost(value: number | null): string {
   </section>
 
   <section class="patch-card" aria-labelledby="patch-title">
-    <div class="section-heading"><h2 id="patch-title">Patches publicados</h2><span>0 arquivos disponíveis</span></div>
+    <div class="section-heading"><h2 id="patch-title">Patches publicados</h2><span>{{ availablePatchFileCount }} arquivo(s) disponível(is)</span></div>
     <p v-if="comparison.runs.every((run) => run.patch === null)" class="empty-evidence">O campo <code>info.submission</code> está vazio nas duas trajetórias. O LCP não reconstrói patches a partir dos logs.</p>
     <template v-for="run in comparison.runs" :key="`diff-${run.model}`">
       <article v-for="file in diffsByModel[run.model]" :key="`${run.model}-${file.path}`" class="diff-file">

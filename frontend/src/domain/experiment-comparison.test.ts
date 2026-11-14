@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import comparisonText from '../data/evidence/exp-002-astropy-12907.json?raw'
-import { issueContext, parseExperimentComparison, parseUnifiedDiff, toolCalls } from './experiment-comparison'
+import { issueContext, parseExperimentComparison, parseUnifiedDiff, publishedOutcomeLabel, toolCalls } from './experiment-comparison'
 
 describe('EXP-002 real SWE-bench evidence', () => {
   it('loads the two verified local trajectories without inventing patches', () => {
@@ -21,5 +21,10 @@ describe('EXP-002 real SWE-bench evidence', () => {
   it('counts changed lines in a unified diff when a source provides one', () => {
     const files = parseUnifiedDiff('diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n-old\n+new\n+next')
     expect(files).toMatchObject([{ path: 'a.py', additions: 2, removals: 1 }])
+  })
+
+  it('derives the published outcome label from each run result', () => {
+    expect(publishedOutcomeLabel(true)).toBe('Resolvido · publicado')
+    expect(publishedOutcomeLabel(false)).toBe('Não resolvido · publicado')
   })
 })

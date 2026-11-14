@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import realSampleText from '../data/evidence/obs-002-agenttrace-sample.json?raw'
 import {
-  collectionDiagnostics, collectionOverview, durationOutlierFence, parseAgentTraceCollection,
+  classifyTraceStatus, collectionDiagnostics, collectionOverview, durationOutlierFence,
+  parseAgentTraceCollection, resolveTraceSelection, traceCountLabel,
 } from './observation-collection'
 
 describe('OBS-002 real AgentTrace collection', () => {
@@ -39,6 +40,35 @@ describe('OBS-002 real AgentTrace collection', () => {
       traceId: '2ff930d3-6a11-4735-a556-665b39fb1503',
       spanId: 'f118f268-e868-4074-a691-dd1a981f3f87',
     })
+  })
+
+  it('classifies a trace with any failed tool as error, even when another tool succeeds', () => {
+    const parsed = parseAgentTraceCollection(realSampleText)
+    if (!parsed.ok) throw new Error('Real derived collection must parse.')
+
+    const mixed = parsed.value.traces.find((trace) => trace.traceId === '85f4513a-af6a-4bb9-b1ac-dd290613b85f')
+    const successful = parsed.value.traces.find((trace) => trace.traceId === '525b7ff2-3dbe-4e8e-ad50-de19c0739a27')
+    const unknown = parsed.value.traces.find((trace) => trace.traceId === 'dc797f46-d2f2-453c-b5d3-3d8e761b395b')
+
+    expect(mixed && classifyTraceStatus(mixed)).toBe('error')
+    expect(successful && classifyTraceStatus(successful)).toBe('success')
+    expect(unknown && classifyTraceStatus(unknown)).toBe('unknown')
+  })
+
+  it('keeps a valid filtered selection, selects the first fallback, and clears an empty result', () => {
+    const parsed = parseAgentTraceCollection(realSampleText)
+    if (!parsed.ok) throw new Error('Real derived collection must parse.')
+    const first = parsed.value.traces[0]!
+    const second = parsed.value.traces[1]!
+
+    expect(resolveTraceSelection([first, second], second.traceId)?.traceId).toBe(second.traceId)
+    expect(resolveTraceSelection([first], second.traceId)?.traceId).toBe(first.traceId)
+    expect(resolveTraceSelection([], second.traceId)).toBeNull()
+  })
+
+  it('derives singular and plural trace labels from the loaded collection size', () => {
+    expect(traceCountLabel(1)).toBe('1 trace carregado')
+    expect(traceCountLabel(12)).toBe('12 traces carregados')
   })
 })
 
