@@ -62,6 +62,11 @@ export type ParseResult =
   | { readonly ok: true; readonly value: ObservationRun; readonly warnings: readonly ValidationIssue[] }
   | { readonly ok: false; readonly errors: readonly ValidationIssue[] }
 
+interface IndexedObservationEvent {
+  readonly event: ObservationEvent
+  readonly sourceIndex: number
+}
+
 const sourceKinds: readonly ObservationSourceKind[] = ['trace', 'self_report', 'fixture']
 const eventKinds: readonly ObservationEventKind[] = ['model', 'tool', 'message', 'system']
 const eventStatuses: readonly ObservationEventStatus[] = ['success', 'error', 'unknown']
@@ -198,7 +203,7 @@ function parseUsage(value: unknown, path: string, errors: ValidationIssue[]): Ob
   return { inputTokens, outputTokens, durationMs, costUsd }
 }
 
-function parseEvent(value: unknown, index: number, errors: ValidationIssue[]): ObservationEvent | null {
+function parseEvent(value: unknown, index: number, errors: ValidationIssue[]): IndexedObservationEvent | null {
   const path = `$.events[${index}]`
   if (!isRecord(value)) {
     errors.push(error('INVALID_EVENT', path, 'Expected an event object.'))
@@ -223,60 +228,69 @@ function parseEvent(value: unknown, index: number, errors: ValidationIssue[]): O
   const detail = nullableString(value, 'detail', `${path}.detail`, errors)
 
   if (id === null || seq === null || kind === null || name === null || status === null) return null
-  return { id, parentId, seq, kind, name, startedAt, endedAt, status, usage, detail }
+  return {
+    event: { id, parentId, seq, kind, name, startedAt, endedAt, status, usage, detail },
+    sourceIndex: index,
+  }
 }
 
-function validateEventIdentityAndHierarchy(events: readonly ObservationEvent[], errors: ValidationIssue[]): void {
+function validateEventIdentityAndHierarchy(events: readonly IndexedObservationEvent[], errors: ValidationIssue[]): void {
   const idIndexes = new Map<string, number>()
   const seqIndexes = new Map<number, number>()
 
-  events.forEach((event, index) => {
+  events.forEach(({ event, sourceIndex }) => {
     const previousIdIndex = idIndexes.get(event.id)
     if (previousIdIndex !== undefined) {
-      errors.push(error('DUPLICATE_EVENT_ID', `$.events[${index}].id`, `Event id duplicates $.events[${previousIdIndex}].id.`))
+      errors.push(error('DUPLICATE_EVENT_ID', `$.events[${sourceIndex}].id`, `Event id duplicates $.events[${previousIdIndex}].id.`))
     } else {
-      idIndexes.set(event.id, index)
+      idIndexes.set(event.id, sourceIndex)
     }
 
     const previousSeqIndex = seqIndexes.get(event.seq)
     if (previousSeqIndex !== undefined) {
-      errors.push(error('DUPLICATE_EVENT_SEQUENCE', `$.events[${index}].seq`, `Event sequence duplicates $.events[${previousSeqIndex}].seq.`))
+      errors.push(error('DUPLICATE_EVENT_SEQUENCE', `$.events[${sourceIndex}].seq`, `Event sequence duplicates $.events[${previousSeqIndex}].seq.`))
     } else {
-      seqIndexes.set(event.seq, index)
+      seqIndexes.set(event.seq, sourceIndex)
     }
   })
 
   const parentById = new Map<string, string | null>()
-  events.forEach((event, index) => {
+  events.forEach(({ event, sourceIndex }) => {
     parentById.set(event.id, event.parentId)
     if (event.parentId !== null && !idIndexes.has(event.parentId)) {
-      errors.push(error('UNKNOWN_PARENT', `$.events[${index}].parent_id`, 'Parent event does not exist in this run.'))
+      errors.push(error('UNKNOWN_PARENT', `$.events[${sourceIndex}].parent_id`, 'Parent event does not exist in this run.'))
     }
   })
 
-  const complete = new Set<string>()
-  const visiting = new Set<string>()
-  const reportedCycles = new Set<string>()
+  const states = new Map<string, 'visiting' | 'complete'>()
+  for (const startId of parentById.keys()) {
+    if (states.has(startId)) continue
 
-  const visit = (id: string): void => {
-    if (complete.has(id)) return
-    if (visiting.has(id)) {
-      if (!reportedCycles.has(id)) {
-        const index = idIndexes.get(id)
-        errors.push(error('CYCLIC_EVENT_HIERARCHY', `$.events[${index ?? 0}].parent_id`, 'Event hierarchy contains a cycle.'))
-        reportedCycles.add(id)
+    const path: string[] = []
+    let currentId: string | null = startId
+    while (currentId !== null) {
+      const state = states.get(currentId)
+      if (state === 'complete') break
+      if (state === 'visiting') {
+        const sourceIndex = idIndexes.get(currentId)
+        errors.push(error(
+          'CYCLIC_EVENT_HIERARCHY',
+          `$.events[${sourceIndex ?? 0}].parent_id`,
+          'Event hierarchy contains a cycle.',
+        ))
+        break
       }
-      return
+
+      states.set(currentId, 'visiting')
+      path.push(currentId)
+      const parentId = parentById.get(currentId)
+      currentId = parentId !== null && parentId !== undefined && parentById.has(parentId)
+        ? parentId
+        : null
     }
 
-    visiting.add(id)
-    const parentId = parentById.get(id)
-    if (parentId !== null && parentId !== undefined && parentById.has(parentId)) visit(parentId)
-    visiting.delete(id)
-    complete.add(id)
+    for (const id of path) states.set(id, 'complete')
   }
-
-  for (const id of parentById.keys()) visit(id)
 }
 
 function temporalWarnings(
@@ -365,7 +379,7 @@ export function parseLcpObservation(input: string): ParseResult {
   const totalDurationMs = nonNegativeNumber(parsed, 'total_duration_ms', '$.total_duration_ms', errors)
   const events = parsed.events
     .map((event, index) => parseEvent(event, index, errors))
-    .filter((event): event is ObservationEvent => event !== null)
+    .filter((event): event is IndexedObservationEvent => event !== null)
 
   validateEventIdentityAndHierarchy(events, errors)
   if (errors.length > 0 || runId === null || source === null || agent === null) return { ok: false, errors }
@@ -378,7 +392,9 @@ export function parseLcpObservation(input: string): ParseResult {
     warnings.push(warning('SELF_REPORTED_EVIDENCE', '$.source.kind', 'Evidence is self-reported, not independently observed.'))
   }
 
-  const normalizedEvents = [...events].sort((left, right) => left.seq - right.seq)
+  const normalizedEvents = events
+    .map(({ event }) => event)
+    .sort((left, right) => left.seq - right.seq)
   const value: ObservationRun = {
     schemaVersion: LCP_OBSERVATION_SCHEMA_VERSION,
     runId,

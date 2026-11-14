@@ -37,6 +37,16 @@ function errorCodes(result: ParseResult): string[] {
   return result.ok ? [] : result.errors.map((issue) => issue.code)
 }
 
+function hierarchyEvents(length: number, cyclic: boolean): Record<string, unknown>[] {
+  return Array.from({ length }, (_, index) => minimalEvent({
+    id: `evt-${index + 1}`,
+    seq: index + 1,
+    parent_id: index === 0
+      ? (cyclic ? `evt-${length}` : null)
+      : `evt-${index}`,
+  }))
+}
+
 describe('LCP Evidence v1 parser and normalizer', () => {
   it('C01 parses a complete envelope deterministically and orders events by sequence', () => {
     const result = parse({
@@ -185,6 +195,11 @@ describe('LCP Evidence v1 parser and normalizer', () => {
     }))
 
     expect(errorCodes(result)).toEqual(expect.arrayContaining(['DUPLICATE_EVENT_ID', 'DUPLICATE_EVENT_SEQUENCE']))
+    if (result.ok) return
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'DUPLICATE_EVENT_ID', path: '$.events[1].id' }),
+      expect.objectContaining({ code: 'DUPLICATE_EVENT_SEQUENCE', path: '$.events[1].seq' }),
+    ]))
   })
 
   it('C08 rejects missing names and unknown parents', () => {
@@ -195,6 +210,30 @@ describe('LCP Evidence v1 parser and normalizer', () => {
     }))
 
     expect(errorCodes(result)).toEqual(expect.arrayContaining(['REQUIRED_STRING', 'UNKNOWN_PARENT']))
+    if (result.ok) return
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'REQUIRED_STRING', path: '$.events[0].name' }),
+      expect.objectContaining({ code: 'UNKNOWN_PARENT', path: '$.events[1].parent_id' }),
+    ]))
+  })
+
+  it('C08 preserves original paths for identity errors after an invalid event', () => {
+    const invalidEvent = minimalEvent({ id: 'invalid', seq: 99 })
+    delete invalidEvent.name
+    const result = parse(minimalEnvelope({
+      events: [
+        invalidEvent,
+        minimalEvent({ id: 'duplicate', seq: 1 }),
+        minimalEvent({ id: 'duplicate', seq: 1 }),
+      ],
+    }))
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'DUPLICATE_EVENT_ID', path: '$.events[2].id' }),
+      expect.objectContaining({ code: 'DUPLICATE_EVENT_SEQUENCE', path: '$.events[2].seq' }),
+    ]))
   })
 
   it('C08 rejects cyclic event hierarchies', () => {
@@ -206,6 +245,33 @@ describe('LCP Evidence v1 parser and normalizer', () => {
     }))
 
     expect(errorCodes(result)).toContain('CYCLIC_EVENT_HIERARCHY')
+  })
+
+  it('C08 accepts a 10,000-event acyclic hierarchy without recursive stack use', () => {
+    let result: ParseResult | undefined
+
+    expect(() => {
+      result = parse(minimalEnvelope({ events: hierarchyEvents(MAX_OBSERVATION_EVENTS, false) }))
+    }).not.toThrow()
+    expect(result?.ok).toBe(true)
+    if (!result || !result.ok) return
+    expect(result.value.events).toHaveLength(MAX_OBSERVATION_EVENTS)
+  })
+
+  it('C08 returns a structured error for a deep cycle instead of throwing RangeError', () => {
+    let result: ParseResult | undefined
+
+    expect(() => {
+      result = parse(minimalEnvelope({ events: hierarchyEvents(MAX_OBSERVATION_EVENTS, true) }))
+    }).not.toThrow()
+    expect(result?.ok).toBe(false)
+    if (!result || result.ok) return
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'CYCLIC_EVENT_HIERARCHY',
+        path: '$.events[0].parent_id',
+      }),
+    ]))
   })
 
   it('C09 keeps ordinal sequence while missing time and usage stay null', () => {
