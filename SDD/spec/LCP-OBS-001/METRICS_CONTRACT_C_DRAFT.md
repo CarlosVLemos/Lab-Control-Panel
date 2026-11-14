@@ -11,7 +11,7 @@
 ```ts
 type KnownNumber = {
   value: number | null;
-  known: number;  // quantas operações elegíveis têm dado válido
+  known: number;  // operações elegíveis com inteiro não negativo e seguro
   eligible: number; // quantas operações exigiriam o dado para total completo
 };
 type DurationMetric = {
@@ -54,7 +54,8 @@ type ObservationMetrics = {
 ## Tokens, lacunas e custo
 - Elegíveis à série são eventos `kind=model` em sua **faixa própria**; ordenar por `position.ordinal` se todos fornecem ordinais válidos e únicos; para LCP v1 sem ordinais usar ordem declarada `seq` **rotulada** como serialização, nunca coordenadas de tempo. Jamais misturar spans monotônicos na série de tokens.
 - `inputTokens`/`outputTokens` só são somáveis se valores por operação forem **incrementais**, não cumulativos, e nenhum evento elegível for ambíguo/duplicado por uma hierarquia sobreposta. O envelope LCP v1 define `usage` como uso da operação. Quando uma fonte externa ou estrutura não sustentar essa semântica, marcar total `null` e emitir aviso; não deduzir pelo modelo.
-- `KnownNumber.known/eligible` mostram cobertura por dimensão. Se falta valor de input/output em **qualquer** geração, o total respectivo é `null` (sem somar parcialmente como se fosse completo). `totalTokens` só existe quando ambos os totais têm cobertura completa e sem ambiguidade.
+- Política conservadora v1 para hierarquia: qualquer relação ancestral `model → model`, direta ou indireta, torna a agregação de uso ambígua e mantém os totais e cumulativos em `null`, mesmo que as chamadas possam ser independentes. Não deduplicar nem inferir cobrança separada sem evidência contratual adicional.
+- `KnownNumber.known/eligible` mostram cobertura por dimensão. Somente valor `number`, inteiro seguro e não negativo conta como conhecido; `null`, fração, número negativo, infinito ou inteiro inseguro não aumenta `known` nem é substituído por zero. Na projeção `TokenPoint`, valor inválido é `null`; o `ObservationRun` original permanece inalterado. Se falta valor válido de input/output em **qualquer** geração, o total respectivo é `null` (sem somar parcialmente como se fosse completo). `totalTokens` só existe quando ambos os totais têm cobertura completa e sem ambiguidade.
 - Na curva acumulada, um passo sem métrica torna aquela dimensão acumulada `null` a partir desse ponto, inclusive passos seguintes; nunca retomar soma cumulativa ocultando lacuna. A UI pode exibir valores pontuais ainda conhecidos.
 - Para execuções sem gerações: `known=0`, `eligible=0`, **total de tokens null**, em vez de zero observado.
 - `reportedCostUsd` é null **até existir evidência suficiente de custos por operação e semântica de reporte bem definida**; não estimar preço, multiplicar tokens por tabela presumida nem tratar ausência como US$ 0. Caso agregado reportado confiável seja introduzido, exigir alteração explícita e testes de precisão decimal.

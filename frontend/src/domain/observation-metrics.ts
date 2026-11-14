@@ -44,14 +44,18 @@ interface DimensionAggregate {
   readonly unsafe: boolean
 }
 
+function isKnownTokenValue(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
 function safeTokenSum(left: number, right: number): number | null {
-  if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right) || left < 0 || right < 0) return null
+  if (!isKnownTokenValue(left) || !isKnownTokenValue(right)) return null
   const sum = left + right
-  return Number.isSafeInteger(sum) && sum >= 0 ? sum : null
+  return isKnownTokenValue(sum) ? sum : null
 }
 
 function aggregateDimension(values: readonly (number | null)[], ambiguous: boolean): DimensionAggregate {
-  const known = values.filter((value) => value !== null).length
+  const known = values.filter(isKnownTokenValue).length
   if (values.length === 0) {
     return { metric: { value: null, known: 0, eligible: 0 }, unsafe: false }
   }
@@ -163,8 +167,10 @@ function buildTokenSeries(
   let totalUnsafe = false
 
   const points = events.map((event): TokenPoint => {
-    const inputTokens = event.usage?.inputTokens ?? null
-    const outputTokens = event.usage?.outputTokens ?? null
+    const rawInputTokens = event.usage?.inputTokens ?? null
+    const rawOutputTokens = event.usage?.outputTokens ?? null
+    const inputTokens = isKnownTokenValue(rawInputTokens) ? rawInputTokens : null
+    const outputTokens = isKnownTokenValue(rawOutputTokens) ? rawOutputTokens : null
 
     if (inputAvailable) {
       if (inputTokens === null) inputAvailable = false

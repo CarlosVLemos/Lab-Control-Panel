@@ -276,4 +276,90 @@ describe('observation metrics', () => {
       'INPUT_TOKEN_SUM_UNSAFE',
     ]))
   })
+
+  it('M09 excludes an individual fractional token value from known coverage', () => {
+    const metrics = computeObservationMetrics(runFrom(envelope({
+      events: [event({ usage: { input_tokens: 1.5, output_tokens: 2 } })],
+    })))
+
+    expect(metrics.summary.inputTokens).toEqual({ value: null, known: 0, eligible: 1 })
+    expect(metrics.summary.outputTokens).toEqual({ value: 2, known: 1, eligible: 1 })
+    expect(metrics.summary.totalTokens).toBeNull()
+    expect(metrics.tokenSeries[0]).toMatchObject({
+      inputTokens: null,
+      cumulativeInputTokens: null,
+      cumulativeTotalTokens: null,
+    })
+    expect(metrics.warnings).toEqual(expect.arrayContaining([
+      'INPUT_TOKEN_COVERAGE_PARTIAL',
+      'INPUT_TOKEN_SUM_UNSAFE',
+    ]))
+  })
+
+  it('M09 excludes an individual unsafe integer from known coverage', () => {
+    const metrics = computeObservationMetrics(runFrom(envelope({
+      events: [event({ usage: { input_tokens: Number.MAX_SAFE_INTEGER + 1, output_tokens: 1 } })],
+    })))
+
+    expect(metrics.summary.inputTokens).toEqual({ value: null, known: 0, eligible: 1 })
+    expect(metrics.summary.totalTokens).toBeNull()
+    expect(metrics.tokenSeries[0]).toMatchObject({ inputTokens: null, cumulativeInputTokens: null })
+    expect(metrics.warnings).toEqual(expect.arrayContaining([
+      'INPUT_TOKEN_COVERAGE_PARTIAL',
+      'INPUT_TOKEN_SUM_UNSAFE',
+    ]))
+  })
+
+  it('M09 fails closed when individually safe output token values overflow in aggregate', () => {
+    const metrics = computeObservationMetrics(runFrom(envelope({
+      events: [
+        event({ id: 'step-1', seq: 1, usage: { input_tokens: 0, output_tokens: Number.MAX_SAFE_INTEGER } }),
+        event({ id: 'step-2', seq: 2, usage: { input_tokens: 0, output_tokens: 1 } }),
+      ],
+    })))
+
+    expect(metrics.summary.inputTokens).toEqual({ value: 0, known: 2, eligible: 2 })
+    expect(metrics.summary.outputTokens).toEqual({ value: null, known: 2, eligible: 2 })
+    expect(metrics.summary.totalTokens).toBeNull()
+    expect(metrics.tokenSeries.map((point) => point.cumulativeOutputTokens)).toEqual([
+      Number.MAX_SAFE_INTEGER,
+      null,
+    ])
+    expect(metrics.warnings).toContain('OUTPUT_TOKEN_SUM_UNSAFE')
+  })
+
+  it('M09 treats an indirect model ancestor as ambiguous usage hierarchy', () => {
+    const metrics = computeObservationMetrics(runFrom(envelope({
+      events: [
+        event({ id: 'model-parent', seq: 1, usage: { input_tokens: 10, output_tokens: 5 } }),
+        event({ id: 'tool-between', parent_id: 'model-parent', seq: 2, kind: 'tool', status: 'success' }),
+        event({ id: 'model-child', parent_id: 'tool-between', seq: 3, usage: { input_tokens: 20, output_tokens: 8 } }),
+      ],
+    })))
+
+    expect(metrics.summary.inputTokens).toEqual({ value: null, known: 2, eligible: 2 })
+    expect(metrics.summary.outputTokens).toEqual({ value: null, known: 2, eligible: 2 })
+    expect(metrics.summary.totalTokens).toBeNull()
+    expect(metrics.tokenSeries.every((point) => point.cumulativeTotalTokens === null)).toBe(true)
+    expect(metrics.warnings).toContain('AMBIGUOUS_MODEL_USAGE_HIERARCHY')
+  })
+
+  it('M09 reports coherent coverage across valid, absent, and invalid token values', () => {
+    const metrics = computeObservationMetrics(runFrom(envelope({
+      events: [
+        event({ id: 'step-1', seq: 1, usage: { input_tokens: 10, output_tokens: 1 } }),
+        event({ id: 'step-2', seq: 2, usage: { input_tokens: null, output_tokens: 2 } }),
+        event({ id: 'step-3', seq: 3, usage: { input_tokens: 2.5, output_tokens: 3 } }),
+      ],
+    })))
+
+    expect(metrics.summary.inputTokens).toEqual({ value: null, known: 1, eligible: 3 })
+    expect(metrics.summary.outputTokens).toEqual({ value: 6, known: 3, eligible: 3 })
+    expect(metrics.summary.totalTokens).toBeNull()
+    expect(metrics.tokenSeries.map((point) => point.inputTokens)).toEqual([10, null, null])
+    expect(metrics.warnings).toEqual(expect.arrayContaining([
+      'INPUT_TOKEN_COVERAGE_PARTIAL',
+      'INPUT_TOKEN_SUM_UNSAFE',
+    ]))
+  })
 })
