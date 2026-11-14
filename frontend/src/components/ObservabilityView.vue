@@ -59,10 +59,10 @@ const trustLabel = computed(() => run.value ? sourceTrustLabel(run.value) : '')
 const partialOrder = computed(() => lanes.value.length > 1)
 const statusMessage = computed(() => ({
   empty: 'Nenhum arquivo importado.',
-  loading: 'Lendo e validando o arquivo apenas neste navegador.',
-  invalid: 'Arquivo rejeitado. O relatório anterior foi removido.',
-  ready: 'Arquivo validado e pronto para inspeção.',
-  partial: 'Arquivo validado com lacunas ou advertências explícitas.',
+  loading: 'Lendo arquivo.',
+  invalid: 'Arquivo rejeitado.',
+  ready: 'Arquivo validado.',
+  partial: 'Arquivo validado com avisos.',
 })[state.value])
 
 function stopReplay(): void {
@@ -216,9 +216,8 @@ onUnmounted(() => {
 <template>
   <section id="main-content" class="observability-hero" aria-labelledby="observability-title">
     <div>
-      <p class="eyebrow">EVIDÊNCIA LOCAL · SEM UPLOAD</p>
-      <h1 id="observability-title">Observabilidade.<br><em>Somente o que foi registrado.</em></h1>
-      <p class="lede">Importe um AgentTrace ou LCP Evidence v1. O arquivo fica no navegador; registros são inspecionados, nunca executados.</p>
+      <h1 id="observability-title">Observabilidade</h1>
+      <p class="lede">AgentTrace ou LCP Evidence v1 · processamento local, sem upload</p>
     </div>
     <div class="import-actions">
       <label class="file-label" for="observation-file">Arquivo JSON local</label>
@@ -237,12 +236,12 @@ onUnmounted(() => {
 
   <template v-if="run && metrics">
     <section class="metadata" aria-label="Metadados da observação">
-      <span>FORMATO · {{ inputFormat }}</span><span>RUN · {{ run.runId }}</span><span>FONTE · {{ run.source.producer }}</span><span>AGENTE · {{ run.agent.name ?? '—' }}</span><span>MODELO · {{ run.agent.model ?? '—' }}</span>
+      <span>Formato: {{ inputFormat }}</span><span>Execução: {{ run.runId }}</span><span>Fonte: {{ run.source.producer }}</span><span>Agente: {{ run.agent.name ?? '—' }}</span><span>Modelo: {{ run.agent.model ?? '—' }}</span>
     </section>
 
     <section class="trust-banner" :class="run.sourceKind">
-      <div><p class="eyebrow">CONFIANÇA DA FONTE</p><strong>{{ trustLabel }}</strong></div>
-      <p>Proveniência reportada não autentica o conteúdo. Declarações de sanitização não são prova independente.</p>
+      <strong>{{ trustLabel }}</strong>
+      <p>Origem declarada; conteúdo e sanitização não verificados.</p>
     </section>
 
     <section class="observation-kpis" aria-label="Indicadores observados">
@@ -260,16 +259,16 @@ onUnmounted(() => {
     </section>
 
     <section v-if="metrics.warnings.length" class="warning-panel" aria-label="Advertências da observação">
-      <div><p class="eyebrow">LIMITES E LACUNAS</p><strong>{{ metrics.warnings.length }} advertência(s)</strong></div>
+      <strong>Avisos ({{ metrics.warnings.length }})</strong>
       <ul><li v-for="warning in metrics.warnings" :key="warning"><code>{{ warning }}</code></li></ul>
     </section>
 
     <section class="chart-card" aria-labelledby="token-chart-title">
       <div class="section-heading">
-        <div><p class="eyebrow">CONSUMO ACUMULADO</p><h2 id="token-chart-title">Tokens por etapa LLM</h2></div>
+        <h2 id="token-chart-title">Tokens por etapa LLM</h2>
         <span>{{ chartPagination.total }} etapas · {{ chart.usesSerializationOrder ? 'ordem seq declarada' : 'ordem ordinal' }}</span>
       </div>
-      <p class="chart-note">Eixo X discreto, não temporal. Lacunas interrompem as linhas; nenhuma taxa de tokens por segundo é inferida.</p>
+      <p class="chart-note">Eixo por etapa, não por tempo; lacunas interrompem as linhas.</p>
       <div v-if="chart.points.length === 0 || chart.maxValue === null" class="chart-empty">Consumo acumulado indisponível para esta observação.</div>
       <template v-else>
         <div class="chart-legend"><span class="input-line">Entrada</span><span class="output-line">Saída</span><span class="total-line">Total</span></div>
@@ -296,11 +295,11 @@ onUnmounted(() => {
 
     <section class="lane-card" aria-labelledby="replay-title">
       <div class="section-heading">
-        <div><p class="eyebrow">REPLAY DE REGISTROS</p><h2 id="replay-title">Faixas independentes</h2></div>
+        <h2 id="replay-title">Eventos por faixa</h2>
         <span>{{ run.events.length }} eventos totais</span>
       </div>
-      <p v-if="partialOrder" class="partial-order visible">ORDEM PARCIAL · as faixas não compartilham cronologia global. Play usa intervalo visual fixo de {{ PLAY_INTERVAL_MS }} ms.</p>
-      <p v-else class="partial-order">REPLAY VISUAL · percorre registros da faixa em intervalo fixo de {{ PLAY_INTERVAL_MS }} ms, sem usar duração reportada.</p>
+      <p v-if="partialOrder" class="partial-order visible">Ordem parcial: as faixas não têm cronologia comum. Reprodução a cada {{ PLAY_INTERVAL_MS }} ms.</p>
+      <p v-else class="partial-order">Reprodução a cada {{ PLAY_INTERVAL_MS }} ms, sem usar a duração reportada.</p>
       <div class="lane-switcher" role="group" aria-label="Selecionar faixa de eventos">
         <button v-for="lane in lanes" :key="lane.id" type="button" :class="{ active: selectedLaneId === lane.id }" :aria-pressed="selectedLaneId === lane.id" @click="selectedLaneId = lane.id">
           {{ lane.label }} <span>{{ lane.events.length }}</span>
@@ -311,13 +310,13 @@ onUnmounted(() => {
       <div class="replay-toolbar">
         <div class="replay-controls" role="group" aria-label="Controles de replay visual">
           <button type="button" :disabled="activeEvents.length === 0" @click="moveSelection(-1)">← Anterior</button>
-          <button v-if="!playing" type="button" :disabled="activeEvents.length === 0" @click="playReplay">▶ Play</button>
-          <button v-else type="button" @click="stopReplay">Ⅱ Pause</button>
+          <button v-if="!playing" type="button" :disabled="activeEvents.length === 0" @click="playReplay">▶ Reproduzir</button>
+          <button v-else type="button" @click="stopReplay">Ⅱ Pausar</button>
           <button type="button" :disabled="activeEvents.length === 0" @click="moveSelection(1)">Próximo →</button>
         </div>
         <label>Filtrar tipo
           <select v-model="eventFilter">
-            <option value="all">Todos</option><option value="model">Model</option><option value="tool">Tool</option><option value="message">Message</option><option value="system">System</option>
+            <option value="all">Todos</option><option value="model">Modelo</option><option value="tool">Ferramenta</option><option value="message">Mensagem</option><option value="system">Sistema</option>
           </select>
         </label>
       </div>
@@ -337,7 +336,7 @@ onUnmounted(() => {
 
         <aside class="event-detail" aria-live="polite">
           <template v-if="selectedEvent">
-            <p class="eyebrow">DETALHE DO REGISTRO</p><h3>{{ selectedEvent.name }}</h3>
+            <h3>{{ selectedEvent.name }}</h3>
             <dl>
               <div><dt>ID</dt><dd><code>{{ selectedEvent.id }}</code></dd></div>
               <div><dt>Tipo / status</dt><dd>{{ selectedEvent.kind }} / {{ selectedEvent.status }}</dd></div>
@@ -347,9 +346,9 @@ onUnmounted(() => {
               <div><dt>Duração da operação</dt><dd>{{ selectedEvent.usage?.durationMs === null || selectedEvent.usage?.durationMs === undefined ? '—' : `${formatNullableNumber(selectedEvent.usage.durationMs, 6)} ms` }}</dd></div>
               <div><dt>Custo reportado</dt><dd>{{ selectedEvent.usage?.costUsd ?? '—' }}</dd></div>
             </dl>
-            <div class="event-detail-text"><strong>Detalhe não confiável</strong><pre>{{ selectedDetail.text }}</pre><small v-if="selectedDetail.truncated">Texto truncado na UI: {{ selectedDetail.originalLength }} caracteres no registro original.</small></div>
+            <div class="event-detail-text"><strong>Conteúdo importado</strong><pre>{{ selectedDetail.text }}</pre><small v-if="selectedDetail.truncated">Truncado: {{ selectedDetail.originalLength }} caracteres no registro original.</small></div>
           </template>
-          <template v-else><p class="eyebrow">DETALHE DO REGISTRO</p><h3>Nenhum evento selecionado</h3><p>Escolha uma faixa e um registro para inspecionar apenas os dados normalizados.</p></template>
+          <template v-else><h3>Nenhum evento selecionado</h3></template>
         </aside>
       </div>
     </section>

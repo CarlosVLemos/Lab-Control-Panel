@@ -55,7 +55,7 @@ test('apresenta a evidência CODE-001 como comparável, sem declarar vencedor', 
   await expect(page.getByText('Resultados importados · não reexecutados')).toBeVisible()
 })
 
-test('remove slogans, banners e rodapé promocional', async ({ page }) => {
+test('remove slogans, banners e rodapé promocional em todas as telas', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Comparação de classificadores' })).toBeVisible()
   await expect(page.getByText('Compare decisões.')).toHaveCount(0)
@@ -67,4 +67,10 @@ test('remove slogans, banners e rodapé promocional', async ({ page }) => {
   await page.getByRole('button', { name: 'Código' }).click()
   await expect(page.getByText('sem veredito inventado.')).toHaveCount(0)
   await expect(page.getByText('Resultados importados · não reexecutados')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Observabilidade' }).click()
+  await expect(page.getByRole('heading', { name: 'Observabilidade' })).toBeVisible()
+  await expect(page.getByText('Somente o que foi registrado.')).toHaveCount(0)
+  await expect(page.getByText('EVIDÊNCIA LOCAL · SEM UPLOAD')).toHaveCount(0)
+  await expect(page.getByText('AgentTrace ou LCP Evidence v1 · processamento local, sem upload')).toBeVisible()
 })
