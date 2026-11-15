@@ -1,5 +1,7 @@
 # LCP-OBS-001 — Matriz de validação (PLANNED / NOT_RUN)
 
+> **Estado atual — 2026-11-15:** os casos desta matriz orientaram as etapas A–D. A PR #51 integrada registrou CI backend/frontend e Playwright 6/6 para os fluxos EXP-002/OBS-002. Evidências locais condicionais e verificações originalmente `NOT_RUN` permanecem identificadas nos relatórios de cada etapa; CI da interface não autentica a origem dos traces importados.
+
 **Execução:** responsabilidade do operador, ao fim de cada etapa. O Codex prepara testes e relata comandos sugeridos; **não os executa sem autorização explícita**. Nenhuma célula desta matriz constitui teste já executado.
 
 | ID | Etapa | Dado/caso | Critério esperado |

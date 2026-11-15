@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | --- |
 | LCP-002 | Persistência PostgreSQL e migrações | `done` — PR #31 merged; Issue #2 closed | [#2](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2) | [FROZEN MVP v4](spec/LCP-002/contract.md) · [CR-001](spec/LCP-002/CHANGE_REQUEST-001.md) | [Evidências](spec/LCP-002/validation-result.md) · [Revisão](spec/LCP-002/review.md) |
 
-| RAG-001-REMOTE | Adaptador remoto com custo controlado (somente contrato) | `ready` — contrato MVP v2 FROZEN por decisão humana; runtime em branch separada | [#45](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/45) | [FROZEN MVP v2](spec/RAG-001-REMOTE/contract.md) | [Plano de testes](spec/RAG-001-REMOTE/tests.md) |
+| RAG-001-REMOTE | Adaptador remoto com custo controlado | `done` — contrato e runtime offline-first integrados pelas PRs #46/#47; piloto pago NOT_RUN | [#45](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/45) | [FROZEN MVP v2](spec/RAG-001-REMOTE/contract.md) | [Testes e limites](spec/RAG-001-REMOTE/tests.md) |
 
 Histórico LCP-002: contrato MVP v4 FROZEN, PR #31 integrada à main em 2026-11-11, Issue #2 fechada. RAG-001-REMOTE: contrato MVP v2 FROZEN por decisão humana em 2026-11-13 (PR #46, comentário #6853766192). Implementação Python offline autorizada em branch separada; nenhuma chamada paga nem merge autorizado.
 
@@ -12,6 +12,14 @@ Histórico LCP-002: contrato MVP v4 FROZEN, PR #31 integrada à main em 2026-11-
 
 | ID | Título | Estado | Decisão | Contrato e testes |
 | --- | --- | --- | --- | --- |
-| LCP-OBS-001 | Importação e observabilidade de execução agêntica | **Etapas A/B/C aprovadas localmente** (C FROZEN v1 no commit local `3289cc7d`); D proposta, aguardando operador; sem merge | [ADR-004](../docs/architecture/ADR-004-import-first-agent-observability.md) | [Spec](spec/LCP-OBS-001/spec.md) · [Contrato v1 + CR-002](spec/LCP-OBS-001/contract.md) · [Aprovações](spec/LCP-OBS-001/APPROVALS_2026-11-14.md) · [CR-002](spec/LCP-OBS-001/CHANGE_REQUEST-002.md) · [Tarefa Codex B](spec/LCP-OBS-001/CODEX_TASK_B.md) · [Contrato C proposto](spec/LCP-OBS-001/METRICS_CONTRACT_C_DRAFT.md) · [Tarefa Codex C](spec/LCP-OBS-001/CODEX_TASK_C.md) · [Proposta UI D](spec/LCP-OBS-001/UI_CONTRACT_D_DRAFT.md) · [Tarefa Codex D](spec/LCP-OBS-001/CODEX_TASK_D.md) · [Etapas](spec/LCP-OBS-001/tasks.md) · [Testes NOT_RUN](spec/LCP-OBS-001/tests.md) · [Export prompt DRAFT](spec/LCP-OBS-001/LCP_EXPORT.md) |
+| LCP-OBS-001 | Importação e observabilidade de execução agêntica | **Integrada à `main`** — parser, AgentTrace, métricas e UI; PR #51 validada por CI | [ADR-004](../docs/architecture/ADR-004-import-first-agent-observability.md) | [Spec](spec/LCP-OBS-001/spec.md) · [Contrato v1 + CR-002](spec/LCP-OBS-001/contract.md) · [Aprovações](spec/LCP-OBS-001/APPROVALS_2026-11-14.md) · [CR-002](spec/LCP-OBS-001/CHANGE_REQUEST-002.md) · [Tarefa Codex B](spec/LCP-OBS-001/CODEX_TASK_B.md) · [Contrato C histórico](spec/LCP-OBS-001/METRICS_CONTRACT_C_DRAFT.md) · [Tarefa Codex C](spec/LCP-OBS-001/CODEX_TASK_C.md) · [Proposta UI D histórica](spec/LCP-OBS-001/UI_CONTRACT_D_DRAFT.md) · [Tarefa Codex D](spec/LCP-OBS-001/CODEX_TASK_D.md) · [Etapas](spec/LCP-OBS-001/tasks.md) · [Testes](spec/LCP-OBS-001/tests.md) |
 
 **Nota factual de 14/11/2026:** PRs #31, #37, #39, #42, #44, #46 e #47 foram integradas à `main`. PR #41 segue aberta, sem merge. A implementação do runner RAG está na `main`; **o piloto pago não foi executado**. Texto histórico acima sobre PR #46/47 "branch separada" deve ser lido como registro do momento anterior à integração.
+
+## Estado atual — 2026-11-15
+
+- A PR #41 foi integrada à `main`; ela entrega preparação/protocolo, não comprova as duas execuções reais da issue #40.
+- As PRs #46 e #47 foram integradas. O adaptador RAG remoto e seus testes offline existem; chamadas reais, disponibilidade do modelo, tarifas efetivas e piloto da issue #43 permanecem `NOT_RUN`.
+- A observabilidade por importação local, incluindo a interface da Etapa D, foi integrada pela PR #51 e validada na CI. Os relatos locais e estados DRAFT/NOT_RUN acima permanecem como histórico dos gates anteriores.
+- Worker RQ, runner de código, Policy Engine e Release Controller não integram o MVP final.
+- A PR #55 adiciona somente um laboratório Kubernetes frontend-only com kind/Kustomize; não implementa Argo Rollouts, canary ou rollback.

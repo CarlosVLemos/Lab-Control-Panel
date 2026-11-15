@@ -1,6 +1,10 @@
 # RAG-001 Remote MVP — Implementation evidence (offline only)
 
-**Track:** CRITICAL (external credentials/cost). **Contract:** FROZEN MVP v2, [PR #46 human approval](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/46#issuecomment-6853766192), source contract branch `feat/rag-001-remote-adapter-contract`. **Implementation:** [PR #47](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/47) stacked on contract, not merged.
+**Track:** CRITICAL (external credentials/cost). **Contract:** FROZEN MVP v2, [PR #46 human approval](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/46#issuecomment-6853766192), source contract branch `feat/rag-001-remote-adapter-contract`. **Implementation:** [PR #47](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/47), integrated into `main`.
+
+## Current state — 2026-11-15
+
+PRs #46 and #47 are integrated. The remote adapter and offline tests are present in `main`; the latest audited main CI also completed successfully. Actual OpenAI embeddings/generation, account entitlement, effective provider prices and the paid pilot remain **NOT_RUN**. Merge of the adapter is not evidence of a live experiment.
 
 ## Scope implemented
 
@@ -15,6 +19,7 @@
 - GitHub Actions [PR CI](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43431198099), head initially `12cf759ea1174b2fa642933afc6a70f6bd048f0d`: backend `cd backend && python -m pytest -q` completed **success** as observed on the GitHub job step. Frontend tests and build completed success. The [completed PR run](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43433696018) and [push run](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43433689854) for head `8c453dd202265767179325ecc3b2481d235dc6bd` both ended `completed/success`, including backend pytest, Compose restart, Playwright E2E, frontend tests and build. **Newer changes require their own CI result**, so this evidence is not transferable to later commits.
 - Included tests: `backend/tests/test_rag_remote.py` verify manifest hash, dry-run zero-network constructor, six pairs, index/query counts, 12+1 and N+1 quota saturation, token/budget blocking, secret sentinel in error output, no retries configured at SDK constructor, null telemetry and reports.
 - Actual OpenAI generation, embeddings and account model availability: **NOT_RUN**. No API key accessed, no paid requests authorized. Real transport retry behavior needs independent review and transport-level mocked tests if future review identifies a gap.
+- Current main evidence: [CI run 43766631648](https://github.com/CarlosVLemos/Lab-Control-Panel/actions/runs/43766631648) completed successfully at `9b09e694b5a9e61a3dff67a89cfab8fffa281af5`. This validates the configured offline suite, not a paid provider call.
 
 ## Safe commands (from backend directory)
 

@@ -1,6 +1,8 @@
 # LCP-OBS-001 — Plano de etapas e gates
 
 **Estado 14/11:** A/B/C concluídas e validadas pelo operador; C FROZEN v1 no commit local `3289cc7d` e parecer Mefisto `passed`. Etapa D tem [proposta de interface](UI_CONTRACT_D_DRAFT.md) e [tarefa](CODEX_TASK_D.md), aguardando autorização do operador; E bloqueada. Código A/B/C segue somente no clone local.
+
+> **Estado atual — 2026-11-15:** A/B/C e a interface D foram integradas à `main`; a PR #51 validou a experiência integrada na CI. As descrições “proposta”, “somente no clone local” e “aguardando autorização” abaixo são preservadas como histórico do sequenciamento original, não como estado corrente.
 **Alvo de produto:** MVP demonstrável no sábado 14/11/2026, sujeito à execução de testes pelo operador e a decisões de deploy separadas.
 
 ## Preparação (documental)

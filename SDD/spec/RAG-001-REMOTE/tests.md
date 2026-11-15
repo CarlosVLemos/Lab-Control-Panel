@@ -1,6 +1,8 @@
 # RAG-001-REMOTE — testes mínimos do MVP
 
-**Estado:** planejados / NOT_RUN (runtime não implementado). **Ambiente:** pytest, clients fakes e transporte HTTP mockado; CI totalmente offline. Revisão: Mefisto.
+**Estado atual — 2026-11-15:** runtime offline-first e testes integrados pelas PRs #46/#47; CI totalmente offline com pytest, clients fakes e transporte HTTP mockado. O piloto com provider real permanece **NOT_RUN**. Revisão: Mefisto.
+
+O texto e a matriz abaixo preservam o plano de testes do contrato. A execução offline comprova barreiras de software, não disponibilidade de modelo, tarifa efetiva, faturamento ou qualidade de respostas reais.
 
 | Gate | Teste essencial | Aceite |
 | --- | --- | --- |
@@ -16,6 +18,6 @@
 | T10 CI | Suíte completa + prova de CLI sem credencial | CI verde, sem segredo nem chamadas pagas |
 | T11 COTA DE CHAMADAS | Contador fake de envios físicos: executar 12 gerações autorizadas e tentar a 13ª; executar N requisições de embeddings (indexação + consultas) e tentar a N+1ª, incluindo falhas/timeout na contagem | 13ª geração e N+1º embedding são bloqueados **antes do transporte** (0 envio adicional), sem retry, sem saldo negativo ou contador reiniciado |
 
-**Comandos após implementação:** `cd backend && python -m pytest -q tests/test_rag_remote.py tests/test_rag.py` e testes normais da CI. Usar transporte fake para o SDK sem fazer chamada paga. PR de contrato é **somente documentação**, logo runtime continua NOT_RUN.
+**Comandos do runtime implementado:** `cd backend && python -m pytest -q tests/test_rag_remote.py tests/test_rag.py` e testes normais da CI. Usar transporte fake para o SDK sem fazer chamada paga. A CI da `main` executa a suíte backend; nenhuma chamada paga faz parte desses checks.
 
 **Evidência de execução real:** requer aprovação financeira posterior; snapshot de preço/tier/região; acesso válido ao modelo; comando explícito; relatório sanitizado; revisão humana cega. Se qualquer condição falhar: BLOCKED, não PASS.
