@@ -3,7 +3,4 @@ kind: Kustomization
 namespace: lcp
 resources:
   - namespace.yaml
-  - postgres.yaml
-  - api.yaml
   - frontend.yaml
-  - migrate-job.yaml

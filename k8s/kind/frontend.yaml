@@ -7,7 +7,7 @@ spec:
     app: lcp-frontend
   ports:
     - name: http
-      port: 5173
+      port: 8080
       targetPort: http
 ---
 apiVersion: apps/v1
@@ -26,24 +26,22 @@ spec:
     spec:
       automountServiceAccountToken: false
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: frontend
-          image: lcp-frontend:kind-v1
+          image: lcp-frontend:kind-static-v1
           imagePullPolicy: Never
           ports:
             - name: http
-              containerPort: 5173
-          env:
-            - name: VITE_API_PROXY_TARGET
-              value: http://api:8000
+              containerPort: 8080
           startupProbe:
             httpGet:
               path: /
               port: http
-            failureThreshold: 12
             periodSeconds: 5
+            failureThreshold: 12
           readinessProbe:
             httpGet:
               path: /
@@ -61,7 +59,7 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 64Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 256Mi
