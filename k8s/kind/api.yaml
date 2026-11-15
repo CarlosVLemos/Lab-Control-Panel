@@ -51,6 +51,8 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: postgresql+psycopg:///lcp
+            - name: EXPECTED_ALEMBIC_REVISION
+              value: "0001"
           startupProbe:
             httpGet:
               path: /health
@@ -59,7 +61,7 @@ spec:
             periodSeconds: 5
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: http
             periodSeconds: 5
           livenessProbe:
