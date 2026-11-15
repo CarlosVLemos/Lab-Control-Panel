@@ -61,6 +61,9 @@ test('apresenta a evidência CODE-001 como comparável, sem declarar vencedor', 
 test('remove slogans, banners e rodapé promocional em todas as telas', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Comparação de agentes' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Classificação sintética' }).click()
+  await expect(page.getByRole('heading', { name: 'Comparação de classificadores' })).toBeVisible()
   await expect(page.getByText('Compare decisões.')).toHaveCount(0)
   await expect(page.getByText('Não invente confiança.')).toHaveCount(0)
   await expect(page.getByText('DEMONSTRAÇÃO', { exact: true })).toHaveCount(0)
