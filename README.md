@@ -22,7 +22,6 @@ A CI executa pytest com PostgreSQL, Vitest/build do frontend, smoke HTTP após r
 ```bash
 cd frontend
 npm ci
-npm install --no-save --package-lock=false --ignore-scripts @playwright/test@1.56.1
 npx playwright install chromium
 npx playwright test --config playwright.config.ts
 ```

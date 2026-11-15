@@ -48,7 +48,6 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
-          npm install --no-save --package-lock=false --ignore-scripts @playwright/test@1.56.1
           # Browsers + OS libraries are preinstalled. Avoid apt on the Actions runner.
           # Host networking reaches the Compose frontend bound to 127.0.0.1:5173.
           docker run --rm --init --ipc=host --network host \
