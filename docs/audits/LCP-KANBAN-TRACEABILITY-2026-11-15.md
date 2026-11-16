@@ -42,7 +42,7 @@ O MVP efetivo é tecnicamente defensável como um **laboratório experimental lo
 
 ## 3. Matriz completa de rastreabilidade
 
-| Issue | Tarefa | Status GitHub | Status Kanban | Classificação técnica | Critérios atendidos | Critérios pendentes | Evidências |
+| Issue | Tarefa | Status GitHub | Status Kanban antes do saneamento | Classificação técnica | Critérios atendidos | Critérios pendentes | Evidências |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [#1](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/1) | Contratos de domínio e ADRs | Closed/completed | Done | `IMPLEMENTED` | Entidades, invariantes, estados e ADRs | Nenhum do aceite da issue | `backend/app/domain/models.py`; `backend/tests/test_domain_contracts.py`; ADR-001/002/003; [PR #26](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/26) |
 | [#2](https://github.com/CarlosVLemos/Lab-Control-Panel/issues/2) | PostgreSQL e migrações | Closed/completed | Done | `IMPLEMENTED` | Sete tabelas, Alembic, snapshots, transações, CAS, Compose/CI | Limitações aceitas do contrato não são bloqueantes | `backend/alembic/versions/0001_initial_persistence.py`; `backend/app/repositories/persistence.py`; `backend/tests/test_postgresql_persistence.py`; `SDD/spec/LCP-002/`; [PR #31](https://github.com/CarlosVLemos/Lab-Control-Panel/pull/31) |
