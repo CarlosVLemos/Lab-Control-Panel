@@ -2,6 +2,8 @@
 
 **Data:** 2026-11-14 · **Decisão de produto:** aceita · **Contrato técnico de implementação:** DRAFT (não FROZEN).
 
+> **Estado atual — 2026-11-15:** a decisão import-first foi implementada e integrada à `main` pela PR #51, incluindo parser, AgentTrace, métricas e interface. A marca DRAFT acima preserva o estado histórico do contrato no momento desta ADR; não significa que a implementação continue ausente.
+
 ## Contexto e escopo
 O LCP já possui frontend Vue, API FastAPI/PostgreSQL para demonstração Response sintética, importador offline CODE-001 e fundação RAG. Ainda não oferece observabilidade de execuções reais externas. O objetivo de portfólio é provar uma fatia funcional hoje, não construir um provedor ou orquestrador de agentes.
 

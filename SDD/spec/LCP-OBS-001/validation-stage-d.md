@@ -2,6 +2,8 @@
 
 **Estado:** `passed_with_restrictions` em `20d210ecccf0fdfe419b670e6550f76c2b071ff5` — Vitest, oráculos locais e build aprovados. Playwright bloqueado por dependência ausente; roteiro visual permanece `NOT_RUN`.
 
+> **Estado atual — 2026-11-15:** esta restrição descreve o gate local daquele commit. A implementação da interface foi integrada posteriormente; a PR #51 registrou CI com frontend/build e Playwright 6/6. O roteiro visual manual histórico não foi retroativamente convertido em PASS.
+
 **Ambiente:** Node `v26.13.0`, npm `12.2.2`, dependências frontend já presentes. Execução autorizada pelo operador no pedido de limpeza da interface em 14/11/2026; nenhuma dependência foi instalada.
 
 ## Escopo preparado

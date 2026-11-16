@@ -1,6 +1,8 @@
 # LCP-OBS-001 — Especificação funcional da observabilidade agêntica
 
 **Estado:** **Etapa A validada pelo operador e CR-001 aprovada**; **Etapa B autorizada para implementação, contrato FROZEN pela CR-002**. Etapas C–E continuam planejadas. Não confundir aprovação humana de contrato com testes B já executados.
+
+> **Estado atual — 2026-11-15:** o cabeçalho acima registra o gate histórico. Parser, adaptador AgentTrace, métricas e interface da Etapa D foram posteriormente integrados à `main` pela PR #51. A implementação continua import-only: não executa traces nem envia arquivos ao backend.
 **Trilha:** CRITICAL (arquivos de terceiros, fronteira de importação + interface pública).
 **Base de planejamento:** `main@8d4efebc305b2cf671d807ea42d82873373434ff` em 2026-11-14.
 **Decisão:** [ADR-004](../../../docs/architecture/ADR-004-import-first-agent-observability.md).
